@@ -1,0 +1,15 @@
+{
+    "name": "Starstorm Lost",
+	"version": "0.1.0",
+    "description": "Starstorm survivors that lost the poll, now finished up.",
+	"internalname": "SSLost",
+    "author": "Neik, Jingo, Altzeus",
+	"mpcompat": true,
+	"dependencies": [
+		{
+			"name": "Starstorm",
+			"version": "1.9.3-b",
+			"optional": false
+		}
+	]
+}
