@@ -14,7 +14,11 @@ obj.laserdrone:addCallback("create", function(self)
 	self.spriteSpeed = 0.2
 	selfData.state = "idle"
 	selfData.location = 1
-	selfData.enemiesHit = {}
+	selfData.direction = {
+	spin = 1,
+	laserStart = 0,
+	laserEnd = 180
+	}
 end)
 
 obj.laserdrone:addCallback("step", function(self)
@@ -36,11 +40,11 @@ obj.laserdrone:addCallback("step", function(self)
 			end
 		end
 		
-		self.angle = (30 - global.timer % 30) * 12
+		self.angle = (global.timer % 30) * -12 * selfData.direction.spin
 		
 		if selfData.state == "attack" then
 			if not selfData.laser then
-				selfData.laser = 0
+				selfData.laser = selfData.direction.laserStart
 			end
 			local r = 180
 			local boom = false
@@ -75,8 +79,8 @@ obj.laserdrone:addCallback("step", function(self)
 				misc.fireExplosion(selfData.xLaser, selfData.yLaser, 16/19, 16/4, parent:get("damage") * 0.5, parent:get("team"), spr.EfExplosive, nil)
 			end
 			
-			if selfData.laser < 180 then
-				selfData.laser = math.approach(selfData.laser, 180, 4)
+			if selfData.laser ~= selfData.direction.laserEnd then
+				selfData.laser = math.approach(selfData.laser, selfData.direction.laserEnd, 4)
 			else
 				selfData.laser = nil
 				selfData.state = "pulse"
