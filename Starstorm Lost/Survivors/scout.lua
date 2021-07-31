@@ -214,75 +214,6 @@ objBomb:addCallback("step", function(self)
 	end
 end)
 
-local objPOI = Object.new("ScoutPOI")
-objPOI.sprite = Sprite.load("Scout_POI", path.."poi", 11, 6, 26)
-
-objPOI:addCallback("create", function(self)
-	local selfData = self:getData()
-	local selfAc = self:getAccessor()
-	
-	selfData.team = "player"
-	selfData.damage = 0
-	--selfData.life = 0.1
-	selfData.range = 200
-	self.spriteSpeed = 0.2
-	selfData.coverage = 0
-	
-	for i = 0, 400 do
-		if self:collidesMap(self.x, self.y + i + 1) then
-			self.y = self.y + i
-			break
-		end
-	end
-	
-	local r = selfData.range
-	for _,b in ipairs(obj.B:findAllEllipse(self.x + r, self.y + r, self.x - r, self.y - r)) do
-		if not b:getData().POImarked then
-			selfData.coverage = selfData.coverage + 1
-			b:getData().POImarked = true
-		end
-	end
-	
-end)
-
-objPOI:addCallback("step", function(self)
-	local selfData = self:getData()
-	local selfAc = self:getAccessor()
-	
-	if self.subimage >= self.sprite.frames then
-		self.spriteSpeed = 0
-		
-		if not selfData.active then
-			--for _, 
-		end
-	end
-	
-end)
-objPOI:addCallback("draw", function(self)
-	local selfData = self:getData()
-	local selfAc = self:getAccessor()
-	
-	local tele = nearestMatchingOp(self, obj.Teleporter, "isBig", "~=", 1)
-	
-	if tele then
-		local str = "<"
-		if tele.x >= self.x then
-			str = ">"
-		end
-		--graphics.alpha((-global.timer % 100) * 0.01)
-		--graphics.color(scout.loadoutColor)
-		--graphics.print(str, self.x + 4, self.y - 40, nil, graphics.ALIGN_MIDDLE)
-	end
-	
-	local parent = selfData.parent
-	local cover = math.round(parent:getData().scoutPercent)
-	
-	graphics.alpha((-global.timer % 100) * 0.005)
-	graphics.color(scout.loadoutColor)
-	graphics.circle(self.x, self.y, selfData.range, true)
-	graphics.print(cover.."%", self.x, self.y - 45, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE)
-end)
-
 scout:addCallback("useSkill", function(player, skill)
 	local playerData = player:getData()
 	local playerAc = player:getAccessor()
@@ -293,7 +224,6 @@ scout:addCallback("useSkill", function(player, skill)
 			player:survivorActivityState(1, player:getData().shootAnim, 0.25, true, true)
 		elseif skill == 2 then
 			-- X skill
-			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.2, true, false)
 			sfx.RiotGrenade:play(1.5, 1)
 			local bomb = objBomb:create(player.x, player.y):getData()
 			bomb.vSpeed = -2
@@ -352,9 +282,10 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 						sparks = nil
 						angle = -90 + math.random(-20, 20) * 0.5
 						add = math.random(-5, 5)
-					--[[else
-						angle = angle + math.random(-5, 5) * 0.5]]
-	--[[im really thinkin scout's primary could use for a degree of inaccuracy]]
+					else
+						angle = angle + math.random(-5, 5) * 0.5
+	--[[im really thinkin scout's primary could use for a degree of inaccuracy]] 
+	-- @ done 
 					end
 					local bullet = player:fireBullet(player.x + add, player.y, angle, 340, 0.5, sparks)
 					bullet:set("climb", (i + relevantFrame) * 8)
@@ -365,7 +296,7 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 				for _, droneId in ipairs(player:getData().scoutDrones) do
 					local drone = Object.findInstance(droneId)
 					if drone and drone:isValid() then
-						drone:getData().heat = drone:getData().heat + 10
+						drone:getData().heat = drone:getData().heat + 15
 					end
 				end
 			end
@@ -389,9 +320,14 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 	--[[scout's utility *NEEDS* a hover check, because the acceleration gained increases with pHmax, and pHmax is increased
 		by the hover.  
 		for the pHspeed formula though, mine is just different and linearly increases with pHmax increase subtracted by minus base pHmax,
-		instead of using a square root formula]]
-			playerAc.pHspeed = math.sqrt(playerAc.pHmax) * player.xscale
-			playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax)
+		instead of using a square root formula]] 
+		-- @ done 
+			local hovernum = 0
+			if playerData.hovering then
+				hovernum = 0.4
+			end
+			playerAc.pHspeed = math.sqrt(playerAc.pHmax + hovernum) * player.xscale * 0.5
+			playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax + hovernum)
 			if not net.online or player == net.localPlayer then
 				misc.shakeScreen(3)
 			end
@@ -407,19 +343,9 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 	end
 end)
 
-callback.register("onPlayerHUDDraw", function(player, x, y)
-	if player:getSurvivor() == scout and not player:getData().skin_skill4Override then
-		
-	end
-end)
-
 scout:addCallback("step", function(player)
 	local playerAc = player:getAccessor()
 	local playerData = player:getData()
-	
-	if playerAc.activity == 30 then
-		
-	end
 	
 	if playerAc.moveUpHold == 1 and playerAc.free == 1 then
 		if playerAc.pVspeed > 0 then
@@ -457,10 +383,6 @@ scout:addCallback("step", function(player)
 			playerData.hoverTimer = nil
 		end
 	end
-end)
-
-callback.register("onStep", function()
-
 end)
 
 callback.register("onStageEntry", function()
