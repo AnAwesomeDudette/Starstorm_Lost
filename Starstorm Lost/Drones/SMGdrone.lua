@@ -6,63 +6,94 @@ local idle = Sprite.load("SMGDroneIdle", path.."Idle", 4, 6, 10)
 
 
 
-obj.smgdrone = Object.base("Drone", "SMG Drone")
+obj.smgdrone = Object.new("SMGDrone")
 obj.smgdrone.sprite = idle
 
 obj.smgdrone:addCallback("create", function(self)
 	local selfData = self:getData()
+	self.spriteSpeed = 0.2
 	selfData.cooldown = 10
-	selfData.attackTimerMax = 15
-	selfData.attackTimer = 15
-	selfData.droneSide = 1
-	selfData.droneDistance = math.random(30, 50)
-	self:set("persistent", 1)
-	self:set("maxhp", 120 * Difficulty.getScaling("hp"))
-	self:set("armor", 1000)
-	self:set("x_range", 300)
-	self:set("y_range", 100)
-	self:set("hp", self:get("maxhp"))
-	self:setAnimation("idle", idle)
+	selfData.attackTimerMax = 6 * 4
+	selfData.attackTimer = selfData.attackTimerMax
+	selfData.state = "idle"
+	selfData.heat = 0
+	selfData.location = 1
+	selfData.yOffset = 0
 end)
 
 obj.smgdrone:addCallback("step", function(self)
 	local selfData = self:getData()
 	local selfAc = self:getAccessor()
-	local target = Object.findInstance(selfAc.target)
+	local parent = Object.findInstance(selfData.parentId)
 	
-	self:set("invincible", 1200)
-	self:set("hp", self:get("maxhp"))
-	
-	if target and target:isValid() and selfAc.state == "chase" then
-		local xx = target.x - self.x 
-		local yy = target.y - self.y
+	if parent and parent:isValid() and parent:get("dead") == 0 then
+		-- Awesome's code here
+		if math.chance(50) then
+			selfData.yOffset = selfData.yOffset + 1/30
+		end
+		if selfData.yOffset > math.pi then
+			selfData.yOffset = -math.pi
+		end
+		local offset = math.sin(selfData.yOffset) * 5
+		-- thanks for making drone idle more interesting! :)
 		
-		
-		self.x = math.approach(self.x, target.x + selfData.droneSide * selfData.droneDistance, (self.x - target.x + selfData.droneSide * selfData.droneDistance) * 0.1)
-		self.y = math.approach(self.y, target.y, yy * 0.1)
-		
-		self.xscale = math.sign(xx)
-		
-		if selfData.cooldown > 0 then
-			selfData.cooldown = selfData.cooldown - 1
-		else
-			if selfData.attackTimer > 0 then
-				if selfData.attackTimer % 3 == 0 then
-					sfx.CowboyShoot1:play(1.7, 0.7)
-					self:fireBullet(target.x, target.y, self:getFacingDirection(), 50, selfAc.damage * 0.2, Sprite.find("Scout_Sparks1", "SSLost")):set("specific_target", target.id)
-				end
-				selfData.attackTimer = selfData.attackTimer - 1
-			else
-				selfData.cooldown = 120
-				selfData.attackTimer = selfData.attackTimerMax
-				selfData.droneSide = selfData.droneSide * -1
-				selfData.droneDistance = math.random(30, 50)
+		if selfData.state == "idle" then
+			local xx = parent.x + 10 * selfData.location - self.x
+			local yy = parent.y - 8 - offset - self.y
+			self.x = math.approach(self.x, parent.x + 10 * selfData.location, xx * 0.1)
+			self.y = math.approach(self.y, parent.y - 8 - offset, yy * 0.1)
+			self.xscale = parent.xscale
+			if selfData.heat >= 45 then
+				selfData.state = "attack"
 			end
+		end
 			
-			if selfAc.mortar > 0 then
-				for i = 1, selfAc.mortar do
-					obj.EfMissileSmall:create(self.x, self.y):set("parent", self.id):set("damage", selfAc.damage)
+		if selfData.heat > 0 then
+			selfData.heat = selfData.heat - 1
+		end
+		
+		if selfData.state == "attack" then
+			local r = 100
+			local target = parent
+			local dis = r * 3
+			for _, actor in ipairs(pobj.actors:findAllEllipse(self.x + r * 2, self.y + r, self.x - r * 2, self.y - r)) do
+				if actor and actor:isValid() and target:get("team") ~= parent:get("team") or target == parent then
+					if target == parent or distance(self.x, self.y, actor.x, actor.y) < dis then
+						target = actor
+					end
 				end
+			end
+			if target ~= parent then
+				local xx = target.x - self.x 
+				local yy = target.y - self.y
+				
+				
+				self.y = math.approach(self.y, target.y, yy * 0.1)
+				
+				if xx ~= 0 then
+					self.xscale = math.sign(xx)
+				end
+				
+				if selfData.cooldown > 0 and math.chance(50) then
+					selfData.cooldown = selfData.cooldown - 1
+				else
+					if selfData.attackTimer > 0 then
+						if selfData.attackTimer % 4 == 0 then
+							sfx.ChildDeath:play(2.4 + math.random(-2, 3) * 0.1, 0.4)
+							misc.fireBullet(self.x, self.y, self.xscale * -90 + 90, 100, parent:get("damage") * 0.2, parent:get("team"), Sprite.find("Scout_Sparks1", "SSLost")):set("specific_target", target.id)
+						end
+						selfData.attackTimer = selfData.attackTimer - 1
+					else
+						selfData.cooldown = 60
+						selfData.attackTimer = selfData.attackTimerMax
+					end
+					
+				end
+			else
+				selfData.state = "idle"
+			end
+			if selfData.heat == 0 and selfData.cooldown > 0 then
+				selfData.state = "idle"
 			end
 		end
 	end

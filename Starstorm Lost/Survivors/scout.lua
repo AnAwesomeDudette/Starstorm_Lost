@@ -7,6 +7,7 @@ local scout = Survivor.new("Scout")
 
 local dronePath = "Drones/"
 require(dronePath.."SMGdrone")
+require(dronePath.."Laserdrone")
 
 -- Scout
 
@@ -23,7 +24,7 @@ local sprites = {
 	idle = Sprite.load("Scout_Idle", path.."idle", 1, 6, 10),
 	walk = Sprite.load("Scout_Walk", path.."walk", 8, 6, 9),
 	jump = Sprite.load("Scout_Jump", path.."jump", 1, 6, 9),
-	jumpHover = Sprite.load("Scout_JumpHover", path.."jumpHover", 1, 6, 9),
+	jumpHover = Sprite.load("Scout_JumpHover", path.."jumpHover", 3, 6, 9),
 	climb = Sprite.load("Scout_Climb", path.."climb", 2, 4, 7),
 	death = Sprite.load("Scout_Death", path.."death", 11, 9, 9),
 	decoy = Sprite.load("Scout_Decoy", path.."decoy", 1, 9, 10),
@@ -31,8 +32,7 @@ local sprites = {
 	shoot1_1 = Sprite.load("Scout_Shoot1_1", path.."shoot1_1", 8, 8, 13),
 	shoot1_2 = Sprite.load("Scout_Shoot1_2", path.."shoot1_2", 8, 15, 7),
 	shoot2 = Sprite.load("Scout_Shoot2", path.."shoot2", 4, 10, 7),
-	shoot3 = Sprite.load("Scout_Shoot3", path.."shoot3", 6, 6, 15),
-	shoot4 = Sprite.load("Scout_Shoot4", path.."shoot4", 8, 10, 12),
+	shoot3 = Sprite.load("Scout_Shoot3", path.."shoot3", 6, 6, 15)
 }
 -- Hit sprites
 local sprSparks1 = Sprite.load("Scout_Sparks1", path.."sparks1", 3, 15, 7)
@@ -49,7 +49,8 @@ scout.loadoutSprite = Sprite.load("Scout_Select", path.."select", 5, 2, 0)
 -- Selection description
 scout:setLoadoutInfo(
 [[The &y&Scout is a super agile, fast hitting fighter&!& who excels at
-exploration and moving about tricky landscapes.
+exploration and moving about tricky landscapes. 
+Their drone arsenal provides a variety of tools for any hostile environment.
 &y&Hold space to hover for a short time.&!&]], sprSkills)
 
 -- Skill descriptions
@@ -58,14 +59,15 @@ scout:setLoadoutSkill(1, "Chain Blast",
 &b&Aims downwards if you're hovering.&!&]])
 
 scout:setLoadoutSkill(2, "Recursion Bomb",
-[[Drop a bomb which bounces 4 times dealing damage.
+[[Drop a bomb which bounces 4 times dealing damage, &y&blasting you upwards when not hovering.&!&
 &b&Deals more damage the higher the distance it is dropped from.&!&]])
 
-scout:setLoadoutSkill(3, "Back Dash",
-[[Quickly boost backwards to get away from enemies.]])
+scout:setLoadoutSkill(3, "Backdash",
+[[Instantly accelerate backwards, blasting away from enemies.
+&b&Acceleration increases with movement speed.&!&]])
 
 scout:setLoadoutSkill(4, "Relay Beacon",
-[[Place &y&relay beacons&!& that currently do &r&nothing.&!&]])
+[[Become a Headhunter Katana zero]])
 
 -- Color of highlights during selection
 scout.loadoutColor = Color.fromHex(0x43DBB0)
@@ -77,11 +79,11 @@ scout.idleSprite = sprites.idle
 scout.titleSprite = sprites.walk
 
 -- Endquote
-scout.endingQuote = "..and so he left, with one final beacon activated."
+scout.endingQuote = "..and so they left, with one final beacon activated."
 
 callback.register("postLoad", function()
 	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(scout), {{"Strength", 9}, {"Vitality", 4}, {"Toughness", 4}, {"Agility", 7}, {"Difficulty", 4}, {"Flying lmao", 9}})
-	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(scout), "Very fly, very cool")
+	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(scout), "Scouts are known for their versatility in colonization efforts, but not so much for being the most orderly bunch.")
 end)
 
 -- Stats & Skills
@@ -92,6 +94,7 @@ scout:addCallback("init", function(player)
 	playerAc.pGravity2 = 0.1
 	
 	playerAc.pVmax = 3.1
+	playerAc.pHmax = playerAc.pHmax * 1.15
 	
 	player:setAnimations(sprites)
 	
@@ -108,10 +111,10 @@ scout:addCallback("init", function(player)
     player:setSkill(1, "Chain Blast", "Fire in quick succession for 6x50%.",
     sprSkills, 1, 60)
         
-    player:setSkill(2, "Recursive Bomb", "Drop a bomb which bounces 4 times dealing damage.",
+    player:setSkill(2, "Recursive Bomb", "Drop a bomb which bounces 4 times dealing damage. Blasts you upwards when not hovering.",
     sprSkills, 2, 3 * 60)
 
-    player:setSkill(3, "Back Dash", "Quickly move backwards to get away from enemies.",
+    player:setSkill(3, "Back Dash", "Instantly accelerate backwards, blasting away from enemies. Acceleration scales with movement speed.",
     sprSkills, 3, 2 * 60)
 
     player:setSkill(4, "Relay Beacon", "Place relay beacons that currently do nothing.",
@@ -291,40 +294,34 @@ scout:addCallback("useSkill", function(player, skill)
 		elseif skill == 2 then
 			-- X skill
 			--player:survivorActivityState(2, player:getAnimation("shoot2"), 0.2, true, true)
+			sfx.RiotGrenade:play(1.5, 1)
 			local bomb = objBomb:create(player.x, player.y):getData()
 			bomb.vSpeed = -2
 			bomb.team = playerAc.team
 			bomb.damage = playerAc.damage
 			bomb.parent = player
+			if not playerData.hovering then
+				if playerData.hoverTimer then
+					playerAc.pVspeed = -3 * math.max((playerData.hoverTimer / 120), 4/3)
+				else
+					playerAc.pVspeed = -4
+				end
+			end
 		elseif skill == 3 then
 			-- C skill
-			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.4, false, true)
-			print(playerAc.pHmax)
+			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.4, false, false)
+			--print(playerAc.pHmax)
 		elseif skill == 4 then
 			-- V skill
 			--player:survivorActivityState(4, player:getAnimation("shoot4"), 0.25, false, false)
-			local POI = objPOI:create(player.x, player.y)
-			local poiData = POI:getData()
-			poiData.team = playerAc.team
-			poiData.damage = playerAc.damage
-			poiData.parent = player
-			POI:set("parent", player.id)
-			
-			local Coverage = 0
-					
-			for _,poi in ipairs(objPOI:findAll()) do
-				if poi:get("parent") == player.id then
-					Coverage = Coverage + poi:getData().coverage
-				end
-			end
-			
-			playerData.scoutPercent = Coverage / #obj.B:findAll() * 100
+			local laser = obj.laserdrone:create(player.x, player.y)
+			laser:getData().parentId = player.id
 		end
 		player:activateSkillCooldown(skill)
 	end
 end)
 
-table.insert(call.onImpact, function(damager, x, y)
+callback.register("onImpact", function(damager, x, y)
 	if damager:getData().verticalSparks then
 		local sparks = obj.EfSparks:create(x, y)
 		sparks.sprite = damager:getData().verticalSparks
@@ -344,7 +341,7 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 	if skill == 1 and not playerData.skin_skill1Override then
 		-- Unmaker
 		if relevantFrame >= 1 and relevantFrame <= 6 then 
-			sfx.CowboyShoot1:play(1.7, 0.7)
+			sfx.CowboyShoot1:play(1.7, 0.6)
 			if relevantFrame ~= 1 or not player:survivorFireHeavenCracker(1) then
 				for i = 0, playerAc.sp do
 					local midair = player.sprite == player:getAnimation("shoot1_2")
@@ -363,19 +360,27 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 						bullet:getData().verticalSparks = sprSparks2
 					end
 				end
+				for _, droneId in ipairs(player:getData().scoutDrones) do
+					local drone = Object.findInstance(droneId)
+					if drone and drone:isValid() then
+						drone:getData().heat = drone:getData().heat + 15
+					end
+				end
+			end
+			if player.sprite == player:getAnimation("shoot1_1") then
+				playerData.xAccel = playerData.xAccel or 0 - player.xscale
 			end
 		end
 		
 	elseif skill == 2 and not playerData.skin_skill2Override then
 		-- Rising Star
-		
+
 	elseif skill == 3 and not playerData.skin_skill3Override then
 		-- Recall
 		if relevantFrame == 1 then
-			playerData.moveAccx = player.xscale * -4
-			--[[if playerAc.moveUpHold == 1 then
-				playerData.moveAccy = player.yscale * -2
-			end]]
+			sfx.SpiderShoot1:play(1.5, 0.7)
+			playerAc.pHspeed = math.sqrt(playerAc.pHmax) * player.xscale
+			playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax)
 			if not net.online or player == net.localPlayer then
 				misc.shakeScreen(3)
 			end
@@ -404,18 +409,6 @@ scout:addCallback("step", function(player)
 	
 	if playerAc.activity == 30 then
 		
-	end
-	
-	if playerData.moveAccx then
-		if playerData.moveAccx ~= 0 then
-			local newPos = player.x + playerData.moveAccx
-			if player:collidesMap(newPos, player.y) or playerAc.activity == 30 then
-				playerData.moveAccx = nil
-			else
-				player.x = newPos
-				playerData.moveAccx = math.approach(playerData.moveAccx, 0, 0.1)
-			end
-		end
 	end
 	
 	if playerAc.moveUpHold == 1 and playerAc.free == 1 then
@@ -454,71 +447,23 @@ scout:addCallback("step", function(player)
 			playerData.hoverTimer = nil
 		end
 	end
-
-	--[
-	if playerData.moveAccy then
-		if playerData.moveAccy ~= 0 then
-			local newPos = player.y + playerData.moveAccy
-			if player:collidesMap(player.y, newPos) then
-				playerData.moveAccy = nil
-			else
-				player.y = newPos
-				playerData.moveAccy = math.approach(playerData.moveAccy, 0, 0.1)
-			end
-		end
-	end--]]
-end)
-
-buff.scoutShield = Buff.new("scoutShield")
-buff.scoutShield.sprite = buff.shield.sprite
-buff.scoutShield:addCallback("start", function(actor)
-	actor:set("armor", actor:get("armor") + 75)
-end)
-buff.scoutShield:addCallback("end", function(actor)
-	actor:set("armor", actor:get("armor") - 75)
 end)
 
 callback.register("onStep", function()
-	for _, tele in ipairs(obj.Teleporter:findMatchingOp("active", ">", 0)) do
-		if not tele:getData().scoutCheck then
-			for _, poi in ipairs(objPOI:findAll()) do
-				obj.EfCircle:create(poi.x, poi.y - 24)
-			end
-			for _, player in ipairs(misc.players) do
-				if player:getSurvivor() == scout then
-					local poiCount = #objPOI:findMatching("parent", player.id)
-					
-				end
-			end
-			tele:getData().scoutCheck = true
-		end
-	end
+
 end)
 
 callback.register("onStageEntry", function()
 	for _, player in ipairs(misc.players) do
 		if player:getSurvivor() == scout then
-			if not player:getData().dronesSpawned then
-				player:getData().dronesSpawned = true
-				obj.smgdrone:create(player.x, player.y):set("master", player.id):set("persistent", 1)
-			end
-			
-			player:getData().scoutPercentPersistent = player:getData().scoutPercentPersistent + math.round(player:getData().scoutPercent)
-			player:getData().scoutPercent = 0
-			
-			player:setSkill(4, "Relay Beacon", "Place relay beacons that upgrade your drones after every stage. Current procent: "..player:getData().scoutPercentPersistent.."%",
-			sprSkills, 4, 1 * 60)
-			
-			player:getData().teleActivated = nil
-			
-			for _, drone in ipairs(obj.smgdrone:findAll()) do
-				if drone:get("master") == player.id then
-					if player:getData().scoutPercentPersistent > 50 then
-						drone:getData().attackTimerMax = drone:getData().attackTimerMax + 3 * math.floor(player:getData().scoutPercentPersistent / 50)
-						player:getData().scoutPercentPersistent = player:getData().scoutPercentPersistent % 50
-					end
-				end
-			end
+			player:getData().scoutDrones = {}
+			local smg = obj.smgdrone:create(player.x, player.y)
+			smg:getData().parentId = player.id
+			table.insert(player:getData().scoutDrones, smg.id)
+			smg = obj.smgdrone:create(player.x, player.y)
+			smg:getData().parentId = player.id
+			smg:getData().location = -1
+			table.insert(player:getData().scoutDrones, smg.id)		
 		end
 	end
 end)
