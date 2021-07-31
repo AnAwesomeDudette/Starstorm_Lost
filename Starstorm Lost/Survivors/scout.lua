@@ -224,6 +224,7 @@ scout:addCallback("useSkill", function(player, skill)
 			player:survivorActivityState(1, player:getData().shootAnim, 0.25, true, true)
 		elseif skill == 2 then
 			-- X skill
+			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
 			sfx.RiotGrenade:play(1.5, 1)
 			local bomb = objBomb:create(player.x, player.y):getData()
 			bomb.vSpeed = -2
@@ -246,6 +247,9 @@ scout:addCallback("useSkill", function(player, skill)
 			--player:survivorActivityState(4, player:getAnimation("shoot4"), 0.25, false, false)
 			local laser = obj.laserdrone:create(player.x, player.y)
 			laser:getData().parentId = player.id
+			laser:getData().direction.spin = player.xscale
+			laser:getData().direction.laserStart = 90 + player.xscale * -90
+			laser:getData().direction.laserEnd = 90 + player.xscale * 90
 		end
 		player:activateSkillCooldown(skill)
 	end
