@@ -224,7 +224,7 @@ scout:addCallback("useSkill", function(player, skill)
 			player:survivorActivityState(1, player:getData().shootAnim, 0.25, true, true)
 		elseif skill == 2 then
 			-- X skill
-			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
+			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, false)
 			sfx.RiotGrenade:play(1.5, 1)
 			local bomb = objBomb:create(player.x, player.y):getData()
 			bomb.vSpeed = -2
