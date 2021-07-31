@@ -67,7 +67,7 @@ scout:setLoadoutSkill(3, "Backdash",
 &b&Acceleration increases with movement speed.&!&]])
 
 scout:setLoadoutSkill(4, "Relay Beacon",
-[[Become a Headhunter Katana zero]])
+[[Become a &b&Headhunter Katana ZERO Real.&!&]])
 
 -- Color of highlights during selection
 scout.loadoutColor = Color.fromHex(0x43DBB0)
@@ -114,7 +114,7 @@ scout:addCallback("init", function(player)
     player:setSkill(2, "Recursive Bomb", "Drop a bomb which bounces 4 times dealing damage. Blasts you upwards when not hovering.",
     sprSkills, 2, 3 * 60)
 
-    player:setSkill(3, "Back Dash", "Instantly accelerate backwards, blasting away from enemies. Acceleration scales with movement speed.",
+    player:setSkill(3, "Backdash", "Instantly accelerate backwards, blasting away from enemies. Acceleration scales with movement speed.",
     sprSkills, 3, 2 * 60)
 
     player:setSkill(4, "Relay Beacon", "Place relay beacons that currently do nothing.",
@@ -293,7 +293,7 @@ scout:addCallback("useSkill", function(player, skill)
 			player:survivorActivityState(1, player:getData().shootAnim, 0.25, true, true)
 		elseif skill == 2 then
 			-- X skill
-			--player:survivorActivityState(2, player:getAnimation("shoot2"), 0.2, true, true)
+			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.2, true, false)
 			sfx.RiotGrenade:play(1.5, 1)
 			local bomb = objBomb:create(player.x, player.y):getData()
 			bomb.vSpeed = -2
@@ -339,9 +339,8 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 	local playerData = player:getData()
 	
 	if skill == 1 and not playerData.skin_skill1Override then
-		-- Unmaker
 		if relevantFrame >= 1 and relevantFrame <= 6 then 
-			sfx.CowboyShoot1:play(1.7, 0.6)
+			sfx.CowboyShoot1:play(1.7+math.random(0, 0.1), 0.6)
 			if relevantFrame ~= 1 or not player:survivorFireHeavenCracker(1) then
 				for i = 0, playerAc.sp do
 					local midair = player.sprite == player:getAnimation("shoot1_2")
@@ -353,6 +352,9 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 						sparks = nil
 						angle = -90 + math.random(-20, 20) * 0.5
 						add = math.random(-5, 5)
+					--[[else
+						angle = angle + math.random(-5, 5) * 0.5]]
+	--[[im really thinkin scout's primary could use for a degree of inaccuracy]]
 					end
 					local bullet = player:fireBullet(player.x + add, player.y, angle, 340, 0.5, sparks)
 					bullet:set("climb", (i + relevantFrame) * 8)
@@ -363,7 +365,7 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 				for _, droneId in ipairs(player:getData().scoutDrones) do
 					local drone = Object.findInstance(droneId)
 					if drone and drone:isValid() then
-						drone:getData().heat = drone:getData().heat + 15
+						drone:getData().heat = drone:getData().heat + 10
 					end
 				end
 			end
@@ -373,12 +375,21 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 		
 	elseif skill == 2 and not playerData.skin_skill2Override then
-		-- Rising Star
 
 	elseif skill == 3 and not playerData.skin_skill3Override then
-		-- Recall
 		if relevantFrame == 1 then
 			sfx.SpiderShoot1:play(1.5, 0.7)
+			--[[playerAc.pHspeed = (playerAc.pHmax-1.095) / 4 * math.sign(playerAc.pHspeed)
+			if playerData.hovering then
+				playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax)
+			else
+				playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax - 0.4)
+			end]]
+			
+	--[[scout's utility *NEEDS* a hover check, because the acceleration gained increases with pHmax, and pHmax is increased
+		by the hover.  
+		for the pHspeed formula though, mine is just different and linearly increases with pHmax increase subtracted by minus base pHmax,
+		instead of using a square root formula]]
 			playerAc.pHspeed = math.sqrt(playerAc.pHmax) * player.xscale
 			playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax)
 			if not net.online or player == net.localPlayer then
@@ -392,7 +403,6 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 			playerAc.pVspeed = 0
 		end
 	elseif skill == 4 and not playerData.skin_skill4Override then
-        -- Overheat Redress
 		
 	end
 end)
@@ -463,7 +473,7 @@ callback.register("onStageEntry", function()
 			smg = obj.smgdrone:create(player.x, player.y)
 			smg:getData().parentId = player.id
 			smg:getData().location = -1
-			table.insert(player:getData().scoutDrones, smg.id)		
+			table.insert(player:getData().scoutDrones, smg.id)
 		end
 	end
 end)
