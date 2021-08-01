@@ -19,6 +19,7 @@ obj.laserdrone:addCallback("create", function(self)
 	laserEnd = 180
 	}
 	selfData.doPulse = false
+	selfData.scepter = 0
 end)
 
 obj.laserdrone:addCallback("step", function(self)
@@ -52,7 +53,7 @@ obj.laserdrone:addCallback("step", function(self)
 			while r > 0 do
 				selfData.xLaser = self.x + math.cos(direction) * r
 				selfData.yLaser = self.y + math.sin(direction) * r
-				local tile = obj.B:findLine(self.x, self.y, selfData.xLaser, selfData.yLaser)
+				local tile = obj.B:findLine(self.x, self.y, selfData.xLaser, selfData.yLaser) or obj.BNoSpawn:findLine(self.x, self.y, selfData.xLaser, selfData.yLaser)
 				if tile then
 					r = r - 1
 					boom = true
@@ -73,7 +74,6 @@ obj.laserdrone:addCallback("step", function(self)
 				end
 			end
 			
-			
 			if boom then 
 				sfx.GiantJellyExplosion:play(1.7, 0.2)
 				misc.fireExplosion(selfData.xLaser, selfData.yLaser, 16/19, 16/4, parent:get("damage") * 0.5, parent:get("team"), spr.EfExplosive, nil)
@@ -83,7 +83,13 @@ obj.laserdrone:addCallback("step", function(self)
 				selfData.laser = math.approach(selfData.laser, selfData.direction.laserEnd, 4)
 			else
 				selfData.laser = nil
-				if selfData.doPulse then
+				if selfData.scepter > 0 then
+					selfData.direction.spin = selfData.direction.spin * -1
+					selfData.direction.laserStart = 90 + selfData.direction.spin * -90
+					selfData.direction.laserEnd = 90 + selfData.direction.spin * 90
+					selfData.laser = nil
+					selfData.scepter = selfData.scepter - 1
+				elseif selfData.doPulse then
 					selfData.state = "pulse"
 				else
 					selfData.state = "retract"
