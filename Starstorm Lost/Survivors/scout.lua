@@ -101,6 +101,8 @@ scout:addCallback("init", function(player)
 	playerData.shootAnim = player:getAnimation("shoot1_1")
 	playerData.scoutPercent = 0
 	playerData.scoutPercentPersistent = 0
+	playerData.pulseCooldown = 0
+	playerData.armsrace = 0
 	
 	if Difficulty.getActive() == dif.Drizzle then
 		player:survivorSetInitialStats(160, 12, 0.055)
@@ -224,7 +226,6 @@ scout:addCallback("useSkill", function(player, skill)
 			player:survivorActivityState(1, player:getData().shootAnim, 0.25, true, true)
 		elseif skill == 2 then
 			-- X skill
-			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, false)
 			sfx.RiotGrenade:play(1.5, 1)
 			local bomb = objBomb:create(player.x, player.y):getData()
 			bomb.vSpeed = -2
@@ -250,6 +251,10 @@ scout:addCallback("useSkill", function(player, skill)
 			laser:getData().direction.spin = player.xscale
 			laser:getData().direction.laserStart = 90 + player.xscale * -90
 			laser:getData().direction.laserEnd = 90 + player.xscale * 90
+			laser:getData().doPulse = playerData.pulseCooldown == 0 and nearestMatchingOp(player, obj.Teleporter, "isBig", "~=", 1)
+			if laser:getData().doPulse then
+				playerData.pulseCooldown = 1200
+			end
 		end
 		player:activateSkillCooldown(skill)
 	end
@@ -274,7 +279,8 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 	
 	if skill == 1 and not playerData.skin_skill1Override then
 		if relevantFrame >= 1 and relevantFrame <= 6 then 
-			sfx.CowboyShoot1:play(1.7+math.random(0, 0.1), 0.6)
+			--sfx.CowboyShoot1:play(1.7, 0.6)
+			sfx.ChildDeath:play(2.4 + math.random(-2, 3) * 0.1, 0.4)
 			if relevantFrame ~= 1 or not player:survivorFireHeavenCracker(1) then
 				for i = 0, playerAc.sp do
 					local midair = player.sprite == player:getAnimation("shoot1_2")
@@ -288,8 +294,6 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 						add = math.random(-5, 5)
 					else
 						angle = angle + math.random(-5, 5) * 0.5
-	--[[im really thinkin scout's primary could use for a degree of inaccuracy]] 
-	-- @ done 
 					end
 					local bullet = player:fireBullet(player.x + add, player.y, angle, 340, 0.5, sparks)
 					bullet:set("climb", (i + relevantFrame) * 8)
@@ -314,18 +318,6 @@ scout:addCallback("onSkill", function(player, skill, relevantFrame)
 	elseif skill == 3 and not playerData.skin_skill3Override then
 		if relevantFrame == 1 then
 			sfx.SpiderShoot1:play(1.5, 0.7)
-			--[[playerAc.pHspeed = (playerAc.pHmax-1.095) / 4 * math.sign(playerAc.pHspeed)
-			if playerData.hovering then
-				playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax)
-			else
-				playerData.xAccel = player.xscale * -3 * math.sqrt(playerAc.pHmax - 0.4)
-			end]]
-			
-	--[[scout's utility *NEEDS* a hover check, because the acceleration gained increases with pHmax, and pHmax is increased
-		by the hover.  
-		for the pHspeed formula though, mine is just different and linearly increases with pHmax increase subtracted by minus base pHmax,
-		instead of using a square root formula]] 
-		-- @ done 
 			local hovernum = 0
 			if playerData.hovering then
 				hovernum = 0.4
@@ -387,11 +379,17 @@ scout:addCallback("step", function(player)
 			playerData.hoverTimer = nil
 		end
 	end
+	
+	if playerData.pulseCooldown > 0 then
+		playerData.pulseCooldown = playerData.pulseCooldown - 1
+	end
 end)
 
 callback.register("onStageEntry", function()
 	for _, player in ipairs(misc.players) do
 		if player:getSurvivor() == scout then
+			player:getData().pulseCooldown = 1200
+			
 			player:getData().scoutDrones = {}
 			local smg = obj.smgdrone:create(player.x, player.y)
 			smg:getData().parentId = player.id

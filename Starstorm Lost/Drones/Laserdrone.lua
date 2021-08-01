@@ -13,12 +13,12 @@ obj.laserdrone:addCallback("create", function(self)
 	local selfData = self:getData()
 	self.spriteSpeed = 0.2
 	selfData.state = "idle"
-	selfData.location = 1
 	selfData.direction = {
 	spin = 1,
 	laserStart = 0,
 	laserEnd = 180
 	}
+	selfData.doPulse = false
 end)
 
 obj.laserdrone:addCallback("step", function(self)
@@ -83,7 +83,11 @@ obj.laserdrone:addCallback("step", function(self)
 				selfData.laser = math.approach(selfData.laser, selfData.direction.laserEnd, 4)
 			else
 				selfData.laser = nil
-				selfData.state = "pulse"
+				if selfData.doPulse then
+					selfData.state = "pulse"
+				else
+					selfData.state = "retract"
+				end
 			end
 		end
 		
@@ -102,8 +106,8 @@ obj.laserdrone:addCallback("step", function(self)
 		if selfData.state == "retract" then 
 			local xx = self.x - parent.x
 			local yy = self.y - parent.y
-			self.x = math.approach(self.x, parent.x, xx * 0.1 + math.sign(xx))
-			self.y = math.approach(self.y, parent.y, yy * 0.1 + math.sign(yy))
+			self.x = math.approach(self.x, parent.x, xx * 0.05 + math.sign(xx) * 2)
+			self.y = math.approach(self.y, parent.y, yy * 0.05 + math.sign(yy) * 2)
 			local r = 10
 			if self.x > parent.x - r and self.x < parent.x + r and self.y > parent.y - r and self.y < parent.y + r then
 				self:destroy()
@@ -122,7 +126,15 @@ obj.laserdrone:addCallback("draw", function(self)
 		graphics.circle(self.x, self.y, 60 - selfData.pulse, true)
 		if tele then
 			local circlex, circley = pointInLine(self.x, self.y, tele.x, tele.y, 60 - selfData.pulse)
+			--[[local x1, y1 = pointInLine(self.x, self.y, tele.x, tele.y, 20 - selfData.pulse / 3)
+			local r = 10 - selfData.pulse / 6
+			local x2 = 
+			local y2 = math.sqrt(r^2 - (x2 - x1)^2) + y1 
+			local x3 = x1 - r
+			local y3 = math.sqrt(r^2 - (x3 - x1)^2) + y1]]
 			graphics.line(self.x, self.y, circlex, circley)
+			--graphics.triangle(circlex, circley, 
+			-- @ tried to draw a triangle here, but math is too math for me :( 
 		end
 	end
 	
