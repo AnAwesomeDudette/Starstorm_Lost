@@ -120,7 +120,7 @@ scout:addCallback("init", function(player)
     sprSkills, 3, 2 * 60)
 
     player:setSkill(4, "Relay Beacon", "Place relay beacons that currently do nothing.",
-    sprSkills, 4, 1 * 60)
+    sprSkills, 4, 12 * 60)
 end)
 
 scout:addCallback("step", function(player)
@@ -142,7 +142,7 @@ end)
 -- Called when the player picks up the Ancient Scepter
 scout:addCallback("scepter", function(player)
 	player:setSkill(4, "", "",
-	sprSkills, 5, 6 * 60)
+	sprSkills, 5, 12 * 60)
 end)
 
 
@@ -226,7 +226,6 @@ scout:addCallback("useSkill", function(player, skill)
 			player:survivorActivityState(1, player:getData().shootAnim, 0.25, true, true)
 		elseif skill == 2 then
 			-- X skill
-			-- player:survivorActivityState(2, player:getAnimation("shoot2"), 0.3, true, false)
 			sfx.RiotGrenade:play(1.5, 1)
 			local bomb = objBomb:create(player.x, player.y):getData()
 			bomb.vSpeed = -2
@@ -256,6 +255,7 @@ scout:addCallback("useSkill", function(player, skill)
 			if laser:getData().doPulse then
 				playerData.pulseCooldown = 1200
 			end
+			laser:getData().scepter = playerAc.scepter
 		end
 		player:activateSkillCooldown(skill)
 	end
