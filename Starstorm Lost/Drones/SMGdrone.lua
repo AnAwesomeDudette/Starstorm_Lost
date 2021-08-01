@@ -38,12 +38,12 @@ obj.smgdrone:addCallback("step", function(self)
 		-- thanks for making drone idle more interesting! :)
 		
 		if selfData.state == "idle" then
-			local xx = parent.x + 10 * selfData.location - self.x
+			local xx = parent.x + 12 * selfData.location - self.x
 			local yy = parent.y - 8 - offset - self.y
-			self.x = math.approach(self.x, parent.x + 10 * selfData.location, xx * 0.1)
+			self.x = math.approach(self.x, parent.x + 12 * selfData.location, xx * 0.1)
 			self.y = math.approach(self.y, parent.y - 8 - offset, yy * 0.1)
 			self.xscale = parent.xscale
-			if selfData.heat >= 45 then
+			if selfData.heat >= 60 then
 				selfData.state = "attack"
 			end
 		end
@@ -81,6 +81,13 @@ obj.smgdrone:addCallback("step", function(self)
 						if selfData.attackTimer % 4 == 0 then
 							sfx.ChildDeath:play(2.4 + math.random(-2, 3) * 0.1, 0.4)
 							misc.fireBullet(self.x, self.y, self.xscale * -90 + 90, 100, parent:get("damage") * 0.2, parent:get("team"), Sprite.find("Scout_Sparks1", "SSLost")):set("specific_target", target.id)
+							local chance = 0
+							for i = 1, parent:getData().armsrace do
+								chance = math.approach(chance, 100, (100 - chance) * 0.05)
+							end
+							if math.chance(chance) then
+								obj.EfMissileSmall:create(self.x, self.y):set("parent", self.id):set("damage", parent:get("damage"))
+							end
 						end
 						selfData.attackTimer = selfData.attackTimer - 1
 					else
@@ -98,3 +105,30 @@ obj.smgdrone:addCallback("step", function(self)
 		end
 	end
 end)
+
+local armsraceSpr = Sprite.find("EfArmsrace", "Vanilla")
+obj.smgdrone:addCallback("draw", function(self)
+	local parent = Object.findInstance(self:getData().parentId)
+	if parent:getData().armsrace > 0 then
+		graphics.drawImage{
+		image = armsraceSpr,
+		x = self.x,
+		y = self.y,
+		xscale = self.xscale
+		}
+	end
+end)
+
+local armsrace = Item.find("Arms Race", "Vanilla")
+armsrace:addCallback("pickup", function(player)
+	if player:getSurvivor() == Survivor.find("Scout", "SSlost") then
+		player:getData().armsrace = player:getData().armsrace + 1
+	end
+end)
+
+callback.register("onItemRemoval", function(player, item, amount)
+	if item == armsrace and player:getSurvivor() == Survivor.find("Scout", "SSlost") then
+		player:getData().armsrace = player:getData().armsrace - amount
+	end
+end)
+
