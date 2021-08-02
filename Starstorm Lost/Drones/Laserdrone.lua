@@ -76,7 +76,7 @@ obj.laserdrone:addCallback("step", function(self)
 			
 			if boom then 
 				sfx.GiantJellyExplosion:play(1.7, 0.2)
-				misc.fireExplosion(selfData.xLaser, selfData.yLaser, 16/19, 16/4, parent:get("damage") * 0.5, parent:get("team"), spr.EfExplosive, nil)
+				misc.fireExplosion(selfData.xLaser, selfData.yLaser, 16/19, 16/4, parent:get("damage") * ((r + 90) / 270), parent:get("team"), spr.EfExplosive, nil)
 			end
 			
 			if selfData.laser ~= selfData.direction.laserEnd then
@@ -131,16 +131,22 @@ obj.laserdrone:addCallback("draw", function(self)
 		graphics.alpha(selfData.pulse / 100 + 0.2)
 		graphics.circle(self.x, self.y, 60 - selfData.pulse, true)
 		if tele then
-			local circlex, circley = pointInLine(self.x, self.y, tele.x, tele.y, 60 - selfData.pulse)
-			--[[local x1, y1 = pointInLine(self.x, self.y, tele.x, tele.y, 20 - selfData.pulse / 3)
-			local r = 10 - selfData.pulse / 6
-			local x2 = 
-			local y2 = math.sqrt(r^2 - (x2 - x1)^2) + y1 
-			local x3 = x1 - r
-			local y3 = math.sqrt(r^2 - (x3 - x1)^2) + y1]]
-			graphics.line(self.x, self.y, circlex, circley)
-			--graphics.triangle(circlex, circley, 
-			-- @ tried to draw a triangle here, but math is too math for me :( 
+			local r = (60 - selfData.pulse) * 0.75
+			local direction = posToAngle(self.x, self.y, tele.x, tele.y, false)
+			local circlex = self.x + math.cos(math.rad(direction)) * r 
+			local circley = self.y - math.sin(math.rad(direction)) * r
+			--local circlex, circley = pointInLine(self.x, self.y, tele.x, tele.y, r)
+			--graphics.line(self.x, self.y, circlex, circley)
+			
+			local dir1 = math.rad(direction + 10)
+			local xx1 = self.x + math.cos(dir1) * r * 0.8
+			local yy1 = self.y - math.sin(dir1) * r * 0.8
+			
+			local dir2 = math.rad(direction - 10)
+			local xx2 = self.x + math.cos(dir2) * r * 0.8
+			local yy2 = self.y - math.sin(dir2) * r * 0.8
+			
+			graphics.triangle(circlex, circley, xx1, yy1, xx2, yy2, false)
 		end
 	end
 	
@@ -152,3 +158,4 @@ obj.laserdrone:addCallback("draw", function(self)
 		end
 	end
 end)
+
