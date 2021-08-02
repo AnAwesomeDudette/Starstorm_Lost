@@ -80,7 +80,7 @@ scout.idleSprite = sprites.idle
 scout.titleSprite = sprites.jumpHover
 
 -- Endquote
-scout.endingQuote = "..and so they left, scanners and radar still pinging onwards."
+scout.endingQuote = "..and so they left, radars and scanners still pinging onwards."
 
 callback.register("postLoad", function()
 	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(scout), {{"Strength", 7}, {"Vitality", 3}, {"Toughness", 4}, {"Agility", 9}, {"Difficulty", 4}, {"Drones", 8}})
