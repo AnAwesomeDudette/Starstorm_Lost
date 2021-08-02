@@ -35,26 +35,26 @@ Duke:setLoadoutInfo(
 [[Prestigious lineage and deep pockets gives the &or&Duke&!& everything he needs to conquer.
 Wielding his cherished &or&Royal Revolver&!&, this noble relies on expensive gadgets to maximize impact,
 with the intent of winning the most ground in the shortest amount of time.
-Style, flair, and proper execution are essential for victory, &or&no exceptions.]], sprSkills)
+&g&Style,&!& &b&flair,&!& and &r&proper execution&!& are essential for victory, &or&no exceptions.&!&]], sprSkills)
 
 -- Skill descriptions
 
 Duke:setLoadoutSkill(1, "Royal Revolver",
-[[Fire for 150% damage.
-Every fourth shot deals 600% damage.]])
+[[Fire for &y&150% damage.&!&
+Every &or&fourth shot&!& deals &r&600% damage.&!&]])
 
 Duke:setLoadoutSkill(2, "Kinetic Replicator",
-[[Deploy a gadget which forms a pain field around it.
-Enemies caught in pain field share damage between eachother.]])
+[[Deploy a gadget which forms a &b&kinetic field&!& around it.
+Enemies caught in the kinetic field &y&share damage between eachother.&!&]])
 
 Duke:setLoadoutSkill(3, "Ambush",
-[[Slide forward on your knees, passing enemies extends distance.
-Loads the Royal Revolver's fourth bullet, piercing empowered by enemies you passed.]])
+[[Slide forward on your knees, &b&passing enemies extends distance&!&.
+Loads the &or&Royal Revolver's fourth bullet&!&, &b&piercing empowered by enemies you passed.&!&]])
 
 Duke:setLoadoutSkill(4, "Watcher's Watch",
-[[Toggle to slow down all enemies in an area around you.
-Affects both walking speed and attack speed.
-Can be stored up to 12 seconds. Fully recharges after 36 seconds.]])
+[[Toggle to &b&slow down all enemies&!& in an area around you.
+&y&Affects both walking speed and attack speed.&!&
+Can be stored up to &lt&12 seconds.&!& Fully recharges after &lt&36 seconds.&!&]])
 
 -- Color of highlights during selection
 Duke.loadoutColor = Color.fromHex(0xB1454D)
@@ -69,8 +69,8 @@ Duke.titleSprite = sprites.walk
 Duke.endingQuote = "..and so he left, plotting a new conquest."
 
 callback.register("postLoad", function()
-	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Duke), {{"Strength", 5}, {"Vitality", 5}, {"Toughness", 5}, {"Agility", 5}, {"Difficulty", 5}, {"Gay", 5}})
-	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Duke), "OMG DUKE")
+	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Duke), {{"Strength", 5}, {"Vitality", 5}, {"Toughness", 5}, {"Agility", 5}, {"Difficulty", 5}, {"&or&Flamboyance&!&", 5}})
+	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Duke), "Nobody knows why this Mecurian's aboard the UES Contact Light, and few are upper-class enough to ask.")
 end)
 
 Duke:addCallback("init", function(player)
@@ -96,10 +96,10 @@ Duke:addCallback("init", function(player)
 	sprSkills, 1, 40)
 		
 	player:setSkill(2, "Kinetic Replicator", "Deploy a gadget with an area around it, in which enemies share damage recieved.",
-	sprSkills, 2, 6 * 60)
+	sprSkills, 2, 9 * 60)
 		
 	player:setSkill(3, "Ambush", "Slide on your knees past your enemies. Loads 4th bullet, empowers piercing depending on enemies you passed.",
-	sprSkills, 3, 6 * 60)
+	sprSkills, 3, 7 * 60)
 		
 	player:setSkill(4, "Watcher's Watch", "Toggle to slow down enemies around you.",
 	sprSkills, 4, 15)
