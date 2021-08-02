@@ -67,8 +67,8 @@ scout:setLoadoutSkill(3, "Backdash",
 &b&Acceleration increases with movement speed.&!&]])
 
 scout:setLoadoutSkill(4, "NULL Radar",
-[[Release a &b&Laser Drone&!& that surveys the area,
-dealing &y&50% damage per hit&!& and &b&locating the teleporter.&!&]])
+[[Release a &b&Laser Drone&!& that surveys the area, dealing &y&33-100% damage per hit&!& 
+&b&increasing with distance.&!& After firing, the drone &b&locates the teleporter.&!&]])
 
 -- Color of highlights during selection
 scout.loadoutColor = Color.fromHex(0x43DBB0)
@@ -121,7 +121,7 @@ scout:addCallback("init", function(player)
     sprSkills, 3, 2 * 60)
 
     player:setSkill(4, "NULL Radar", "Release a Laser Drone that surveys the area, dealing 50% damage per hit and locating the teleporter.",
-    sprSkills, 4, 12 * 60)
+    sprSkills, 4, 15 * 60)
 end)
 
 scout:addCallback("step", function(player)
