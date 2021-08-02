@@ -66,8 +66,9 @@ scout:setLoadoutSkill(3, "Backdash",
 [[Instantly accelerate backwards, blasting away from enemies.
 &b&Acceleration increases with movement speed.&!&]])
 
-scout:setLoadoutSkill(4, "Relay Beacon",
-[[Become a &b&Headhunter Katana ZERO Real.&!&]])
+scout:setLoadoutSkill(4, "NULL Radar",
+[[Release a &b&Laser Drone&!& that surveys the area,
+dealing &y&50% damage per hit&!& and &b&locating the teleporter.&!&]])
 
 -- Color of highlights during selection
 scout.loadoutColor = Color.fromHex(0x43DBB0)
@@ -76,14 +77,14 @@ scout.loadoutColor = Color.fromHex(0x43DBB0)
 scout.idleSprite = sprites.idle
 
 -- Main menu sprite
-scout.titleSprite = sprites.walk
+scout.titleSprite = sprites.jumpHover
 
 -- Endquote
-scout.endingQuote = "..and so they left, with one final beacon activated."
+scout.endingQuote = "..and so they left, scanners and radar still pinging onwards."
 
 callback.register("postLoad", function()
-	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(scout), {{"Strength", 9}, {"Vitality", 4}, {"Toughness", 4}, {"Agility", 7}, {"Difficulty", 4}, {"Flying lmao", 9}})
-	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(scout), "Scouts are known for their versatility in colonization efforts, but not so much for being the most orderly bunch.")
+	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(scout), {{"Strength", 7}, {"Vitality", 3}, {"Toughness", 4}, {"Agility", 9}, {"Difficulty", 4}, {"Drones", 8}})
+	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(scout), "Scouts are known for their versatility in colonization efforts, but not so much for being the most sociable bunch, preferring drones and isolation to humans.")
 end)
 
 -- Stats & Skills
@@ -105,12 +106,12 @@ scout:addCallback("init", function(player)
 	playerData.armsrace = 0
 	
 	if Difficulty.getActive() == dif.Drizzle then
-		player:survivorSetInitialStats(160, 12, 0.055)
+		player:survivorSetInitialStats(150, 12, 0.055)
 	else
-		player:survivorSetInitialStats(110, 12, 0.025)
+		player:survivorSetInitialStats(90, 12, 0.025)
 	end
 	
-    player:setSkill(1, "Chain Blast", "Fire in quick succession for 6x50%.",
+    player:setSkill(1, "Chain Blast", "Fire in quick succession for 6x50%. Aim down when hovering.",
     sprSkills, 1, 60)
         
     player:setSkill(2, "Recursive Bomb", "Drop a bomb which bounces 4 times dealing damage. Blasts you upwards when not hovering.",
@@ -119,7 +120,7 @@ scout:addCallback("init", function(player)
     player:setSkill(3, "Backdash", "Instantly accelerate backwards, blasting away from enemies. Acceleration scales with movement speed.",
     sprSkills, 3, 2 * 60)
 
-    player:setSkill(4, "Relay Beacon", "Place relay beacons that currently do nothing.",
+    player:setSkill(4, "NULL Radar", "Release a Laser Drone that surveys the area, dealing 50% damage per hit and locating the teleporter.",
     sprSkills, 4, 12 * 60)
 end)
 
@@ -136,12 +137,12 @@ end)
 
 -- Called when the player levels up
 scout:addCallback("levelUp", function(player)
-	player:survivorLevelUpStats(26, 3, 0.0025, 3)
+	player:survivorLevelUpStats(27, 3, 0.0025, 3)
 end)
 
 -- Called when the player picks up the Ancient Scepter
 scout:addCallback("scepter", function(player)
-	player:setSkill(4, "", "",
+	player:setSkill(4, "NULL Radar - Gamma", "Release a Laser Drone that surveys the area, dealing 50% damage per hit and locating the teleporter. Sweeps an additional time per scepter.",
 	sprSkills, 5, 12 * 60)
 end)
 
