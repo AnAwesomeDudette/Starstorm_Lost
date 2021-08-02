@@ -120,7 +120,7 @@ scout:addCallback("init", function(player)
     player:setSkill(3, "Backdash", "Instantly accelerate backwards, blasting away from enemies. Acceleration scales with movement speed.",
     sprSkills, 3, 2 * 60)
 
-    player:setSkill(4, "NULL Radar", "Release a Laser Drone that surveys the area, dealing 50% damage per hit and locating the teleporter.",
+    player:setSkill(4, "NULL Radar", "Release a Laser Drone that surveys the area, dealing 33-100% damage per hit and locating the teleporter.",
     sprSkills, 4, 15 * 60)
 end)
 
@@ -142,7 +142,7 @@ end)
 
 -- Called when the player picks up the Ancient Scepter
 scout:addCallback("scepter", function(player)
-	player:setSkill(4, "NULL Radar - Gamma", "Release a Laser Drone that surveys the area, dealing 50% damage per hit and locating the teleporter. Sweeps an additional time per scepter.",
+	player:setSkill(4, "NULL Radar - Gamma", "Release a Laser Drone that surveys the area, dealing 33-100% damage per hit and locating the teleporter. Sweeps an additional time per scepter.",
 	sprSkills, 5, 12 * 60)
 end)
 
