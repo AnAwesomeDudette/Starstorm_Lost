@@ -77,8 +77,8 @@ Mortarman.endingQuote = "..and so he left, permeated in shrapnel."
 
 -- variant stuff
 callback.register("postLoad", function()
-	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Mortarman), {{"Strength", 9}, {"Vitality", 4}, {"Toughness", 4}, {"Agility", 7}, {"Difficulty", 4}, {"Quake", 10}})
-	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Mortarman), "Artillerist")
+	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Mortarman), {{"Strength", 10}, {"Vitality", 5}, {"Toughness", 6}, {"Agility", 6}, {"Difficulty", 6}, {"Quake", 10}})
+	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Mortarman), "The effectiveness of an Artillerist on the battlefield seems to never shift, no matter the age or era.")
 end)
 
 Mortarman:addCallback("init", function(player)
@@ -94,7 +94,7 @@ Mortarman:addCallback("init", function(player)
 	if Difficulty.getActive() == dif.Drizzle then
 		player:survivorSetInitialStats(150, 13, 0.038)
 	else
-		player:survivorSetInitialStats(100, 13, 0.008)
+		player:survivorSetInitialStats(120, 13, 0.008)
 	end
 	
 	player:setSkill(1, "Salvo", "Fire all loaded mortar bombs for 250% damage each.",
@@ -112,7 +112,7 @@ end)
 
 -- Called when the player levels up
 Mortarman:addCallback("levelUp", function(player)
-	player:survivorLevelUpStats(24, 4, 0.0012, 2)
+	player:survivorLevelUpStats(25, 4, 0.0012, 2)
 end)
 
 -- Called when the player picks up the Ancient Scepter
