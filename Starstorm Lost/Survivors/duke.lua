@@ -69,7 +69,7 @@ Duke.titleSprite = sprites.walk
 Duke.endingQuote = "..and so he left, plotting a new conquest."
 
 callback.register("postLoad", function()
-	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Duke), {{"Strength", 5}, {"Vitality", 5}, {"Toughness", 5}, {"Agility", 5}, {"Difficulty", 5}, {"&or&Flamboyance&!&", 5}})
+	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Duke), {{"Strength", 5}, {"Vitality", 5}, {"Toughness", 5}, {"Agility", 5}, {"Difficulty", 5}, {"Flamboyance", 5}})
 	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Duke), "Nobody knows why this Mecurian's aboard the UES Contact Light, and few are upper-class enough to ask.")
 end)
 
