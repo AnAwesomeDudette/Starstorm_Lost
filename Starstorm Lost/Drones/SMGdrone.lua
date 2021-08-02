@@ -56,14 +56,15 @@ obj.smgdrone:addCallback("step", function(self)
 			local r = 100
 			local target = parent
 			local dis = r * 3
-			for _, actor in ipairs(pobj.actors:findAllEllipse(self.x + r * 2, self.y + r, self.x - r * 2, self.y - r)) do
-				if actor and actor:isValid() and target:get("team") ~= parent:get("team") or target == parent then
-					if target == parent or distance(self.x, self.y, actor.x, actor.y) < dis then
-						target = actor
-					end
-				end
-			end
-			if target ~= parent then
+           		for _, actor in ipairs(pobj.actors:findAllEllipse(self.x + r * 2, self.y + r, self.x - r * 2, self.y - r)) do
+               			if actor and actor:isValid() and actor:get("team") ~= parent:get("team") then
+                    			if distance(self.x, self.y, actor.x, actor.y) < dis then
+                        			target = actor
+                      				dis = distance(self.x, self.y, actor.x, actor.y)
+                  			end
+                		end
+            		end
+            		if target and target ~= parent then
 				local xx = target.x - self.x 
 				local yy = target.y - self.y
 				
