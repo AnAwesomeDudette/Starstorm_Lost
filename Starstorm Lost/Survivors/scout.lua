@@ -120,7 +120,7 @@ scout:addCallback("init", function(player)
     sprSkills, 3, 2 * 60)
 
     player:setSkill(4, "Relay Beacon", "Place relay beacons that currently do nothing.",
-    sprSkills, 4, 1 * 60)
+    sprSkills, 4, 15 * 60)
 end)
 
 scout:addCallback("step", function(player)
