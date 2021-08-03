@@ -100,9 +100,6 @@ scout:addCallback("init", function(player)
 	player:setAnimations(sprites)
 	
 	playerData.shootAnim = player:getAnimation("shoot1_1")
-	playerData.scoutPercent = 0
-	playerData.scoutPercentPersistent = 0
-	playerData.pulseCooldown = 0
 	playerData.armsrace = 0
 	
 	if Difficulty.getActive() == dif.Drizzle then
@@ -137,13 +134,13 @@ end)
 
 -- Called when the player levels up
 scout:addCallback("levelUp", function(player)
-	player:survivorLevelUpStats(27, 3, 0.0025, 3)
+	player:survivorLevelUpStats(23, 3, 0.0025, 2)
 end)
 
 -- Called when the player picks up the Ancient Scepter
 scout:addCallback("scepter", function(player)
 	player:setSkill(4, "NULL Radar - Gamma", "Release a Laser Drone that surveys the area, dealing 33-100% damage per hit and locating the teleporter. Sweeps an additional time per scepter.",
-	sprSkills, 5, 12 * 60)
+	sprSkills, 5, 15 * 60)
 end)
 
 
@@ -252,10 +249,6 @@ scout:addCallback("useSkill", function(player, skill)
 			laser:getData().direction.spin = player.xscale
 			laser:getData().direction.laserStart = 90 + player.xscale * -90
 			laser:getData().direction.laserEnd = 90 + player.xscale * 90
-			laser:getData().doPulse = playerData.pulseCooldown == 0 and nearestMatchingOp(player, obj.Teleporter, "isBig", "~=", 1)
-			if laser:getData().doPulse then
-				playerData.pulseCooldown = 1200
-			end
 			laser:getData().scepter = playerAc.scepter
 		end
 		player:activateSkillCooldown(skill)
@@ -381,16 +374,11 @@ scout:addCallback("step", function(player)
 			playerData.hoverTimer = nil
 		end
 	end
-	
-	if playerData.pulseCooldown > 0 then
-		playerData.pulseCooldown = playerData.pulseCooldown - 1
-	end
 end)
 
 callback.register("onStageEntry", function()
 	for _, player in ipairs(misc.players) do
 		if player:getSurvivor() == scout then
-			player:getData().pulseCooldown = 1200
 			
 			player:getData().scoutDrones = {}
 			local smg = obj.smgdrone:create(player.x, player.y)
