@@ -18,7 +18,6 @@ obj.laserdrone:addCallback("create", function(self)
 	laserStart = 0,
 	laserEnd = 180
 	}
-	selfData.doPulse = false
 	selfData.scepter = 0
 end)
 
@@ -89,10 +88,8 @@ obj.laserdrone:addCallback("step", function(self)
 					selfData.direction.laserEnd = 90 + selfData.direction.spin * 90
 					selfData.laser = nil
 					selfData.scepter = selfData.scepter - 1
-				elseif selfData.doPulse then
-					selfData.state = "pulse"
 				else
-					selfData.state = "retract"
+					selfData.state = "pulse"
 				end
 			end
 		end
@@ -130,9 +127,12 @@ obj.laserdrone:addCallback("draw", function(self)
 		graphics.color(Color.fromHex(0x43DBB0))
 		graphics.alpha(selfData.pulse / 100 + 0.2)
 		graphics.circle(self.x, self.y, 60 - selfData.pulse, true)
-		if tele then
+		
 			local r = (60 - selfData.pulse) * 0.75
-			local direction = posToAngle(self.x, self.y, tele.x, tele.y, false)
+			local direction = math.random(0, 360)
+			if tele then
+				direction = posToAngle(self.x, self.y, tele.x, tele.y, false)
+			end
 			local circlex = self.x + math.cos(math.rad(direction)) * r 
 			local circley = self.y - math.sin(math.rad(direction)) * r
 			--local circlex, circley = pointInLine(self.x, self.y, tele.x, tele.y, r)
@@ -147,7 +147,6 @@ obj.laserdrone:addCallback("draw", function(self)
 			local yy2 = self.y - math.sin(dir2) * r * 0.8
 			
 			graphics.triangle(circlex, circley, xx1, yy1, xx2, yy2, false)
-		end
 	end
 	
 	if selfData.state == "attack" then
