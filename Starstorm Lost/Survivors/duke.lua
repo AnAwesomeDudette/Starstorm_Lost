@@ -6,6 +6,7 @@ local Duke = Survivor.new("Duke")
 --local sDukeShoot1 = Sound.load("DukeShoot1", path.."skill1")
 
 local sprite = Sprite.load("Duke_Idle_1", path.."idle_1", 1, 5, 11)
+local tablePlayers = {}
 
 -- Table sprites
 local sprites = {
@@ -83,6 +84,7 @@ Duke:addCallback("init", function(player)
 	playerAc.bulletCount = 0
 	playerData.bulletTimeTimer = 0
 	playerData.rechargeBullet = 3
+	playerData.slowZone = 20
 	
 	player:setAnimations(sprites)
 	
@@ -373,19 +375,25 @@ Duke:addCallback("step", function(player)
 		end
 	end
 	
-	if playerData.dukeTime and playerData.bulletTime > 0 then
-		playerData.bulletTime = playerData.bulletTime - 1
+	if playerData.dukeTime then
+		playerData.slowZone = math.approach(playerData.slowZone, math.sqrt(playerAc.scepter + 4) * 50, (math.sqrt(playerAc.scepter + 4) * 50 - playerData.slowZone) * 0.1)
+		if playerData.bulletTime > 0 then
+			playerData.bulletTime = playerData.bulletTime - 1
+		end
 	end
 		
-	if not playerData.dukeTime and playerData.bulletTime < 720 then 
-		if playerData.bulletTimeTimer % playerData.rechargeBullet == 0 then 
-			playerData.bulletTime = playerData.bulletTime + 1
+	if not playerData.dukeTime then 
+		if playerData.bulletTime < 720 then 
+			if playerData.bulletTimeTimer % playerData.rechargeBullet == 0 then 
+				playerData.bulletTime = playerData.bulletTime + 1
+			end
+			playerData.bulletTimeTimer = playerData.bulletTimeTimer + 1
 		end
-		playerData.bulletTimeTimer = playerData.bulletTimeTimer + 1
-	end	
+		playerData.slowZone = math.approach(playerData.slowZone, 20, (playerData.slowZone - 20) * 0.1)
+	end	 
 	
 	if playerData.dukeTime and playerData.bulletTime > 0 then 
-		local r = 300
+		local r = playerData.slowZone
 		for _, actor in ipairs(pobj.actors:findAllEllipse(player.x - r, player.y - r, player.x + r, player.y + r)) do
 			if actor:get("team") ~= playerAc.team then
 				actor:applyBuff(buffSlowdown, 5)
@@ -397,6 +405,36 @@ Duke:addCallback("step", function(player)
 		playerData.dukeTime = false
 	end
 end)
+
+local function stupidClock()
+	for _,player in ipairs(tablePlayers) do
+		if player and player:isValid() then
+			local playerData = player:getData()
+			local playerAc = player:getAccessor()
+			
+			local r = playerData.slowZone
+			local angle = math.rad(450 - playerData.bulletTime / 2)
+			graphics.color(Color.RED)
+			graphics.alpha(0.6)
+			graphics.circle(player.x, player.y, r, true)
+			for i = 1, 12 do
+				local clockAngle = math.rad(30 * i)
+				local argh = 0 -- dumb lines are dumb 
+				if i == 3 then
+					argh = 1
+				end
+				local x1 = player.x + math.cos(clockAngle) * 0.75 * r + 1
+				local y1 = player.y - math.sin(clockAngle) * 0.75 * r + 1 + argh
+				local x2 = player.x + math.cos(clockAngle) * r + 1
+				local y2 = player.y - math.sin(clockAngle) * r + 1 + argh
+				graphics.line(x1, y1, x2, y2)
+			end
+			local xx = player.x + math.cos(angle) * 0.6 * r + 1
+			local yy = player.y - math.sin(angle) * 0.6 * r + 1
+			graphics.line(player.x, player.y, xx, yy)
+		end
+	end
+end
 
 Duke:addCallback("draw", function(player)
 	local playerData = player:getData()
@@ -451,15 +489,17 @@ Duke:addCallback("draw", function(player)
 			graphics.circle(field.x, field.y, r, false)
 		end
 		
-	end	
+	end
+	
 end)
 
-callback.register("onPlayerHUDDraw", function(player, x, y)
-	local playerData = player:getData()
-	local playerAc = player:getAccessor()
-	
-	if player:getSurvivor() == Duke then 
-		
+callback.register("onStageEntry", function()
+	tablePlayers = {}
+	for _, player in ipairs(misc.players) do
+		if player:getSurvivor() == Duke then
+			table.insert(tablePlayers, player)
+			graphics.bindDepth(-7, stupidClock) -- THANKS ASSA 
+		end
 	end
 end)
 
