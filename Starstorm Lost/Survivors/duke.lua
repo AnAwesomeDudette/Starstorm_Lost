@@ -6,6 +6,7 @@ local Duke = Survivor.new("Duke")
 --local sDukeShoot1 = Sound.load("DukeShoot1", path.."skill1")
 
 local sprite = Sprite.load("Duke_Idle_1", path.."idle_1", 1, 5, 11)
+local tablePlayers = {}
 
 -- Table sprites
 local sprites = {
@@ -398,6 +399,35 @@ Duke:addCallback("step", function(player)
 	end
 end)
 
+local function stupidClock()
+	for _,player in ipairs(tablePlayers) do
+		if player and player:isValid() then
+			local playerData = player:getData()
+			
+			local r = 20
+			local angle = math.rad(450 - playerData.bulletTime / 2)
+			graphics.color(Color.RED)
+			graphics.alpha(0.6)
+			graphics.circle(player.x, player.y, r, true)
+			for i = 1, 12 do
+				local clockAngle = math.rad(30 * i)
+				local argh = 0 -- dumb lines are dumb 
+				if i == 3 then
+					argh = 1
+				end
+				local x1 = player.x + math.cos(clockAngle) * 15 + 1
+				local y1 = player.y - math.sin(clockAngle) * 15 + 1 + argh
+				local x2 = player.x + math.cos(clockAngle) * 20 + 1
+				local y2 = player.y - math.sin(clockAngle) * 20 + 1 + argh
+				graphics.line(x1, y1, x2, y2)
+			end
+			local xx = player.x + math.cos(angle) * 12 + 1
+			local yy = player.y - math.sin(angle) * 12 + 1
+			graphics.line(player.x, player.y, xx, yy)
+		end
+	end
+end
+
 Duke:addCallback("draw", function(player)
 	local playerData = player:getData()
 	local playerAc = player:getAccessor()
@@ -451,15 +481,17 @@ Duke:addCallback("draw", function(player)
 			graphics.circle(field.x, field.y, r, false)
 		end
 		
-	end	
+	end
+	
 end)
 
-callback.register("onPlayerHUDDraw", function(player, x, y)
-	local playerData = player:getData()
-	local playerAc = player:getAccessor()
-	
-	if player:getSurvivor() == Duke then 
-		
+callback.register("onStageEntry", function()
+	tablePlayers = {}
+	for _, player in ipairs(misc.players) do
+		if player:getSurvivor() == Duke then
+			table.insert(tablePlayers, player)
+			graphics.bindDepth(-7, stupidClock) -- THANKS ASSA 
+		end
 	end
 end)
 
