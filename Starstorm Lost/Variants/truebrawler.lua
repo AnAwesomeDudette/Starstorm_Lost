@@ -1,4 +1,5 @@
 callback.register("postLoad", function()
+if modloader.checkFlag("ssl_truebrawler") then--[]
 local survivor = Survivor.find("Brawler", "SSLost")
 
 local newVariant = SurvivorVariant.new(survivor, "True Brawler", Sprite.load("TrueBrawlerSelect", "Survivors/Brawler/Select", 4, 2, 0),
@@ -36,5 +37,5 @@ callback.register("onSkinInit", function(player, skin)
 		skillSprite, 1, 35)
 	end]]
 end)
-
+end--[]
 end)
