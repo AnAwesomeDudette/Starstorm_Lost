@@ -416,7 +416,6 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 		
 		--One-Two / Three-Hit Jab Combo
-		
 		if playerData.currentSpecial == 0 then
 			if playerData.currentNormal == 0 or playerData.currentNormal == 1 then
 				if playerData.currentNormal == 0 then
@@ -463,8 +462,8 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 		
 		if playerData.currentNormal == 0 then
-			--cancelIn(5, 30, false)
-			cancelOn(5)
+			cancelIn(5, 30, true)
+			--cancelOn(5)
 		elseif playerData.currentNormal == 1 then
 			cancelOn(10) --i really need to revamp cancelIn because it's kinda useless
 		elseif playerData.currentNormal == 2 then
