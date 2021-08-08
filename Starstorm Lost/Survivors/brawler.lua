@@ -2,14 +2,13 @@ local path = "Survivors/Brawler/"
 
 local Brawler = Survivor.new("Brawler")
 
-require("Variants/truebrawler")--um, dunno if i can do this ? only one way to fihnd out
+require("Variants/truebrawler")--um, dunno if i can do this ? only one way to fihnd out 
+--ah, yeah i can do that :)
 
--- Sounds
 --local sBrawlerShoot1 = Sound.load("BrawlerShoot1", path.."skill1")
 
 local sprite = Sprite.load("Brawler_Idle", path.."idle", 1, 9, 9)
 
--- Table sprites
 local sprites = {
 	idle = sprite,
 	walk = Sprite.load("Brawler_Walk", path.."walk", 8, 10, 9),
@@ -28,13 +27,10 @@ local sprites = {
 	shoot5 = Sprite.load("Brawler_Shoot5", path.."shoot4", 7, 10, 32),
 }
 
--- Skill sprites
 local sprSkills = Sprite.load("Brawler_Skills", path.."skills", 7, 0, 0)
 
--- Selection sprite
 Brawler.loadoutSprite = Sprite.load("Brawler_Select", path.."select", 4, 2, 0)
 
--- Selection description
 Brawler:setLoadoutInfo(
 [[The &y&Brawler&!& is an agile melee fighter, trained to lay a beatdown unlike any other.
 He can perform &b&Special Moves&!&, and string many normal attacks into
@@ -42,8 +38,6 @@ He can perform &b&Special Moves&!&, and string many normal attacks into
 Despite his abilities, the Brawler believes that &lt&Not every situation needs something fancy.&!&
 &dk&Sometimes you just need a good ol'&!& &y&one-two&!&, something he's more than capable of.]], sprSkills)
 -- his select sprite should really be a self fist bump
-
--- Skill descriptions
 
 Brawler:setLoadoutSkill(1, "Punch",
 [[Punch enemies at close range for &y&100% damage.&!&]])
@@ -59,16 +53,12 @@ Brawler:setLoadoutSkill(4, "Dive Drop",
 [[Become airborne and drop to the ground dealing up to &y&1000% damage.&!&
 Deals more damage the &b&higher the drop&!& is executed. &b&Stuns enemies.&!&]])
 
--- Color of highlights during selection
 Brawler.loadoutColor = Color.fromHex(0xEAB779)
 
--- Misc. menus sprite
 Brawler.idleSprite = sprites.idle
 
--- Main menu sprite
 Brawler.titleSprite = sprites.walk
 
--- Endquote
 Brawler.endingQuote = "..and so he left, wrestling with his past."
 
 callback.register("postLoad", function() -- AWESOME LOOK HERE
@@ -92,13 +82,17 @@ Brawler:addCallback("init", function(player)
 	local playerAc = player:getAccessor()
 	local playerData = player:getData()
 	
+	if modloader.checkFlag("ssl_truebrawler") then
+		playerData.trueBrawler = true
+	end
+	
 	playerData.currentInput = 5 -- number 1-9 representing one of 8 possible directions + a neutral direction
 	playerData.currentButtonInput = 0 -- number 0-4 representing one of 4 possible ability inputs + no input
 	playerData.bufferTimer = 12 -- used as frame counter for when a new directional input should be registered
 	playerData.bufferTimer2 = 45 -- used as frame counter for when a new ability input should be registered
 	playerData.diagonalBufferTimer = 12 -- deprecated of method of preventing excessive diagonal inputs
 	playerData.currentSpecial = 0 -- used to control when special moves occur
-	playerData.currentNormal = 0 --used to prevent it from checking for a normal move that is in progress
+	playerData.currentNormal = 0 --used to control after normal move is triggered, and prevent it from checking for a normal move that is in progress
 	
 	if modloader.checkFlag("ssl_debug") then
 		playerData.debug = true
@@ -113,31 +107,24 @@ Brawler:addCallback("init", function(player)
 	playerData.buttonInputHandler = {} --tracks the last 6 ability inputs (ZXCV) so they can be read
 	for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
 	
-	playerData.inputs = {} -- used to read cardinal direction inputs, for gamepad functionality
+	playerData.inputs = {} -- used to read cardinal direction inputs, helps with gamepad functionality (still needs tweaked)
 	for i=1, 4 do playerData.inputs[i] = 0 end
 	
-	playerData.busterTarget = false --pointer that points towards enemy/enemies hit with Suplex
+	--buster refers to Suplex
+	playerData.busterTarget = false --accessor that points towards enemy/enemies hit with Suplex
 	playerData.busterContact = false --boolean that triggers when contact is made with the ground while Suplex occurs
 	playerData.canBusterBosses = false --self explanatory
-	--buster refers to Suplex
-	playerData.pounceCharge = 0 --counter used to increase strength of charge pounce when C inputs are made
+
+	playerData.pounceCharge = 0 --counter used to increase strength of Charge Pounce when C inputs are made
 	playerData.pounceTimer = 0 --frame counter used to provide charge input window
 	
 	playerData.canPursue = false --boolean that determines if pursuit should go max range
 	
-	playerData.canCancel = true --self explanatory
+	playerData.canCancel = true --self explanatory, but not yet implemented
 	
 	--info on how inputs are handled in step callback
-	--[[Command List: 
-	1 = 236/214Z (Heavy Punch), 
-	2 = 623/421X (Skyward), 
-	3 = 252C (Charge Pounce), 
-	4 = 41236/63214V (Ultra Suplex Hold)
-	
-	Normals List:
-	1 = ZZ (Jab 2)
-	2 = ZZZ (Jab 3 Finisher)
-	3 = ZXC (Pursuit)]]
+	--info on how inputs are read in useSkill callback
+	--info on what desperately needs synced can be found by ctrl-F (--needs synced)
 	
 	playerAc.armor = playerAc.armor + 30
 	
@@ -162,29 +149,25 @@ Brawler:addCallback("init", function(player)
 	sprSkills, 4, 4 * 60)
 end)
 
-
--- Called when the player levels up
 Brawler:addCallback("levelUp", function(player)
 	player:survivorLevelUpStats(25, 4, 0.0012, 2)
 end)
 
--- Called when the player picks up the Ancient Scepter
 Brawler:addCallback("scepter", function(player)
 	player:setSkill(4,
 		"True Buster",
 		"On True Brawler, Ultra Suplex Hold can now be performed on most bosses.",
-		sprSkills, 9,
+		sprSkills, 4,
 		3 * 60
 	)
 	player:getData().canBusterBosses = true
 end)
 
--- Skills
 Brawler:addCallback("useSkill", function(player, skill)
 	local playerAc = player:getAccessor()
 	local playerData = player:getData()
 	
-	local function inputReader(input, window) --First parameter is input you're checking for (a number), second is the span of inputs you check over (bigger numbers are more forgiving, up to 10)
+	local function inputReader(input, window) 
 		for i=1, window do
 			if player:getData().inputHandler then
 			local inputHandler = player:getData().inputHandler
@@ -221,7 +204,6 @@ Brawler:addCallback("useSkill", function(player, skill)
 				player:survivorActivityState(1, player:getAnimation("shoot1"), 0.25, true, true)
 			end
 		
-		--end :)
 		elseif skill == 2 then
 			-- X skill
 			if playerData.currentInput == 3 then
@@ -254,7 +236,7 @@ Brawler:addCallback("useSkill", function(player, skill)
 		elseif skill == 4 then
 			-- V skill
 			
-			--for the sake of leniency, a down input isnt necessary in the half circle
+			--for the sake of leniency, a down input isnt necessary in the half circle motion
 			if playerData.currentInput == 4 then
 					if inputReader(6, 8) then
 						if inputReader(3, 7) then
@@ -293,15 +275,46 @@ Brawler:addCallback("useSkill", function(player, skill)
 		if cd then
 			player:activateSkillCooldown(skill)
 		end
-		--[[so the basic structure for a special move input, in code, is this
-		
-take the currentInput > 
-use inputReader to check for X input in Y window of available inputs (i recommend 5) > 
-set currentSpecial to a unique value
-			you want to have one for if the player is facing right or left if applicable
-			
-			and then, at the end, if the player didnt do a special, you execute the normal code
+		--[[
+					Special Moves are typically handled in useSkill, while Normal Combos are handled in onSkill.
+					This is because Specials are often used *in place* of the typical move, and need to be set before it triggers,
+					while Normal Combos, or ability input strings, change the outcome of a use while it's being used.
+					This convention can be broken as necessary.
+					
+					In useSkill, the inputReader() function reads for two parameters: 
+					the first one is the directional input being checked for,
+					and the second one is the max window it can check over.
+					This means it reads starting at the first place in the list of the most recent inputs, 
+					ending at the given window length.
+					Larger windows mean the player has more time to perform the special after the input, 
+					as long as the correct final input is held.
+					This only works with directional inputs.
+					
+					In onSkill, the inputReader() function reads for two parameters: 
+					the first one is the ability input being checked for,
+					and the second one is its place in the list it should be expected, 
+					such as being the second or third step in the move.
+					This only works for ability/skill inputs.
+					
+					Creating a move involves first checking playerData.currentInput for directional input or playerData.currentButtonInput for ability inputs.
+					Then, using inputReader(), all of the other necessary steps of the move are read from least to most recent, with the window decreasing.
+					Finally, playerData.currentNormal or playerData.currentSpecial is set, so the move can occur properly.
+					Reference existing moves to see how the data of currentSpecial and currentNormal is used.
+					
+					The point of having two completely different systems like this is to open up the most opportunities for new moves,
+					done by either setting them before they execute, or altering them while they're occurring.
 			]]
+			
+		--[[Command List: 
+	1 = 236/214Z (Heavy Punch), 
+	2 = 623/421X (Skyward), 
+	3 = 252C (Charge Pounce), 
+	4 = 41236/63214V (Ultra Suplex Hold)
+	
+	Normals List:
+	1 = ZZ (Jab 2)
+	2 = ZZZ (Jab 3 Finisher)
+	3 = ZXC (Pursuit)]]
 	end
 
 
@@ -312,7 +325,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 	local playerAc = player:getAccessor()
 	local playerData = player:getData()
 	
-	local function inputReader(input, window) --First parameter is input checked for, second is the place in the handler it should be
+	local function inputReader(input, window)
 		if player:getData().buttonInputHandler then
 		local inputHandler = player:getData().buttonInputHandler
 			if inputHandler[window] == input then
@@ -320,7 +333,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			end
 		end
 	end
-	
+	--[[I needed a lot of functions to shorthand the implementation of some Normal Combos, so here they are.]]
 	local function cancel() --just resets handler
 		for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
 	end
@@ -350,6 +363,14 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			end
 		end
 	end
+	
+	--[[
+		it's important to note that you want to have *precise* control of if/when your move is cancelled when making a normal combo
+		use the above functions appropriately
+		
+		typically, any use of relevantFrame is done *after* it's confirmed the player is executing the combo
+		be wary about how/when it's checked
+	]]
 	
 	if skill == 1 and not player:getData().skin_skill1Override then
 		-- Punch
@@ -391,7 +412,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			end
 		end
 		
-		--Three Hit Jab Combo
+		--One-Two / Three-Hit Jab Combo
 		if playerData.currentSpecial == 0 then
 			if playerData.currentNormal == 0 then
 				--cancelOn(5)
@@ -400,7 +421,6 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					if inputReader(1, 2) then
 						playerData.currentNormal = 1
 						player.subimage = 6
-						--performs move here
 						sfx.PodHit:play(0.8)
 						for i = 0, playerAc.sp do
 							local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1)
@@ -413,7 +433,6 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 								bullet:set("climb", i * 8)
 							end
 						end
-						--end move
 					end
 				end
 			elseif playerData.currentNormal == 1 then
@@ -423,7 +442,6 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 						if inputReader(1, 2) then
 							playerData.currentNormal = 2
 							player.subimage = 11
-							--performs move here
 							sfx.PodHit:play(0.8)
 							for i = 0, playerAc.sp do
 								local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1.5)
@@ -435,7 +453,6 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 									bullet:set("climb", i * 8)
 								end
 							end
-						--end move
 						end
 					end
 				end
@@ -464,6 +481,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 				player:set("pVspeed", -2.5)
 			end
 		end
+		
 		-- Skyward
 		if playerData.currentSpecial == 2 then
 			if relevantFrame == 1 then
@@ -496,7 +514,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		
 	elseif skill == 3 and not player:getData().skin_skill3Override then
 	
-		if playerData.currentSpecial == 0 then
+		if playerData.currentSpecial == 0 then --pursuit checker
 			if playerData.currentNormal == 0 then
 				if playerData.currentButtonInput == 3 then
 					if inputReader(2, 2) then
@@ -506,7 +524,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					end
 				end
 			end
-		end --pursuit checker
+		end 
 	
         -- Pounce
 		if playerData.currentNormal == 0 then
@@ -557,7 +575,8 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					playerData.pounceTimer = 60
 				end
 				if playerData.pounceTimer > 0 then
-					if input.checkControl("ability3", player) == input.PRESSED then --this seriously needs to be redone with a button input system
+					if input.checkControl("ability3", player) == input.PRESSED then --needs synced
+					--this seriously needs to be redone with the button input system
 						playerData.pounceCharge = playerData.pounceCharge + 1
 					end
 				end
@@ -607,7 +626,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 				if playerData.canPursue then
 					player:set("pVspeed", -7)
 					playerData.canPursue = false
-					print("can't pursue :(")
+					--print("can't pursue :(")
 				else
 					player:set("pVspeed", -4)
 				end
@@ -713,7 +732,7 @@ Brawler:addCallback("step", function(player)
 		playerData.canCancel = false
 	else
 		playerData.canCancel = true
-	end --self explanatory
+	end --self explanatory, unimplemented
 	
 	local function addInput(newInput)
 		table.insert(playerData.inputHandler, 1, newInput)
@@ -721,34 +740,42 @@ Brawler:addCallback("step", function(player)
 	end --adds new directional input, pushes everything down, removes the end
 	
 	--[[
-			fighting game notation is done alongside the typical representation of numbers on a numpad
-			for example,
+			Fighting game notation is done alongside the typical representation of numbers on a numpad.
 			
 			7  8  9
 			4  5  6
 			1  2  3
 		
-			are all of the valid inputs
+			"6" would be read as right, while "2" would be read as down, so on and so forth.
 			
 			
-			down (2) -> down-forward (3) -> forward (6) + primary (Z) 
+			Down (2) -> Down-right (3) -> Right (6) + Primary (Z) 
 			is translated to
 			236Z
+				or
+			2->3->6+Z
 			
+			This is how inputHandler works, and by extension currentInput. 
+			These numbers are interpreted as corresponding directions.
 			
-			in most fighting games, translation from this notation to player input is always done assuming the player is facing the opponent to the right
-			because you are always facing your opponent and cannot face away
+			It's important to note that any input that uses left or right should have a flipped version, 
+			unless you only want the player to be able to use it facing one direction.
 			
-			since you *can* face away in risk of rain, there'll have to be a flipped input for every move
+			playerData.inputHandler works by reading the latest directional input two frames after a direction is pressed or released.
+			If a new input is not made within 12 frames, a neutral direction input of 5 is placed instead.
 			
-			the way inputHandler works, if no buttons are pressed or released, the currently held input(s) are inputted again every 12 frames
-			if nothing is held, then a neutral input of 5 is registered
-			if a button *is* pressed or released, it updates on the 2nd or 3rd frame after a button is pressed or released, to give leniency
+			playerData.buttonInputHandler works by reading the latest ability/skill input after a button is pressed or released.
+			If a new input is not made within 45 frames, the list is reset.
+			Some Normal Combos set the buffer window of 45 frames to a different number, 
+			in order to provide a short frame window that allows for another button input.
+			The last input of a Normal Combo should reset the buffer window and buttonInputHandler, 
+			either through a relevant function or direct control.
 	]]
 	
 	if playerData.bufferTimer ~= 0 then
 		playerData.bufferTimer = playerData.bufferTimer - 1
 	end --ticks down the bufferTimer frame counter to 0
+	
 	if playerData.diagonalBufferTimer ~= 0 then
 		playerData.diagonalBufferTimer = playerData.diagonalBufferTimer - 1
 	end --kinda dated ??? dont know if this is necessary anymore
@@ -843,7 +870,7 @@ Brawler:addCallback("step", function(player)
 	local left = playerData.inputs[4]
 	
 	--updates
-	local bW = 4 --stands for Buffer Window, currently used to set input lenience
+	local bW = 4 --stands for Buffer Window, currently used to set input leniency and make inputting easier
 	
 	if up == input.PRESSED or right == input.PRESSED or down == input.PRESSED or left == input.PRESSED then
 		playerData.bufferTimer = bW
@@ -853,12 +880,10 @@ Brawler:addCallback("step", function(player)
 	end
 	--end updates
 	
-	--temp removing the 1 frame increased delay for cardinals, (bW - 1)
-	
 	if down == input.HELD 
 	and right == input.HELD 
 	and playerData.bufferTimer < bW then
-		playerData.currentInput = 3
+		playerData.currentInput = 3 
 		playerData.bufferTimer = 12
 		playerData.diagonalBufferTimer = 30
 		addInput(playerData.currentInput)
@@ -927,10 +952,10 @@ Brawler:addCallback("step", function(player)
 --end directional input check
 
 --begin ability input check
-	local primary = input.checkControl("ability1", player) --if we keep this, these need synced tools
-	local secondary = input.checkControl("ability2", player)
-	local utility = input.checkControl("ability3", player)
-	local ultimate = input.checkControl("ability4", player)
+	local primary = input.checkControl("ability1", player) --needs synced
+	local secondary = input.checkControl("ability2", player) --needs synced
+	local utility = input.checkControl("ability3", player) --needs synced
+	local ultimate = input.checkControl("ability4", player) --needs synced
 	
 	local function addInput2(newInput)
 		table.insert(playerData.buttonInputHandler, 1, newInput)
@@ -943,7 +968,7 @@ Brawler:addCallback("step", function(player)
 		else
 			if playerData.currentNormal > 0 then
 				playerData.currentNormal = 0
-			end --failsafe
+			end --failsafe, if the combo did not reset currentNormal at the end
 			playerData.bufferTimer2 = 45
 			for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
 		end
@@ -977,16 +1002,16 @@ Brawler:addCallback("step", function(player)
 		if playerData.bufferTimer2 == 0 then
 			playerData.canPursue = false
 		end
-	end
+	end -- resets pursuit if not followed through
 
 	if playerData.currentSpecial ~= 0 then --test
 		for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
-	end -- causes specials to automatically reset the handler
+	end -- causes specials to automatically reset the ability/skill input handler
 
 	if not playerData.trueBrawler and not playerData.debug then
 		for i=1, 6 do playerData.buttonInputHandler[i] = 0 end 
 		for i=1, 10 do playerData.inputHandler[i] = 5 end
-	end --disables normal combos and special moves entirely
+	end --disables normal combos and special moves entirely if the player doesn't have the trueBrawler flag or debug flag
 	
 	-- awesome pays for her crimes (end of my main code)
 	
@@ -1002,7 +1027,7 @@ Brawler:addCallback("step", function(player)
 				local bullet = player:fireExplosion(player.x + player.xscale * 10, player.y, 20 / 19, 5 / 4, 2.5)
 				bullet:set("stun", 1)
 				bullet:getData().pushSide = playerData.xAccel
-				if playerData.currentSpecial == 3 then
+				if playerData.currentSpecial == 3 then --allows Charge Pounce to deliver momentum
 					bullet:set("knockup", 0.5)
 					bullet:getData().deliverxAccel = playerData.xAccel
 				else
@@ -1065,11 +1090,11 @@ Brawler:addCallback("step", function(player)
 	end
 end)
 
-callback.register("preHit", function(damager, hit)
+callback.register("preHit", function(damager, hit) --needs synced (i think ?)
 	local parent = damager:getParent()
 	if parent and parent:isValid() then
 		if hit and hit:isValid() then
-			if damager:getData().buster then
+			if damager:getData().buster then --allows the bustering to commence
 				if modloader.checkFlag("ssl_heckbosses") or parent:getData().canBusterBosses then
 					parent:getData().busterTarget = hit
 					hit:getData().isBustered = true
@@ -1091,7 +1116,7 @@ callback.register("preHit", function(damager, hit)
 	end
 	if damager:getData().canPursue then --enables pursuit on hit
 		parent:getData().canPursue = true
-		print("can pursue :)")
+		--print("can pursue :)")
 	end
 end)
 
@@ -1103,7 +1128,7 @@ table.insert(call.onHit, function(damager, hit)
 	end
 end)
 
-callback.register("onStep", function()
+callback.register("onStep", function() --needs synced (i thinkkk ???)
 	for _, enemy in ipairs(pobj.actors:findAll()) do
 		local enemyData = enemy:getData()
 		if enemy:isValid() then
@@ -1131,7 +1156,7 @@ callback.register("onStep", function()
 					
 					local enemySprite = enemy.sprite
 					if enemy:collidesMap(enemy.x, enemy.y * enemy.yscale + enemyData.busterParent:get("pVspeed")*2*(enemySprite.height/14--[[approximate player sprite height]])) then
-						enemy.angle = math.approach(enemy.angle, 0, (-15*enemyData.busterParent:get("pVspeed")))
+						enemy.angle = math.approach(enemy.angle, 0, (-15*enemyData.busterParent:get("pVspeed"))) --approximates a rate to return the enemy's angle to 0 before it hits the ground
 						--print(-15*enemyData.busterParent:get("pVspeed"))
 					end
 				end
@@ -1142,7 +1167,7 @@ end)
 
 callback.register("onPlayerDraw", function(player)
 	local playerData = player:getData()
-	if playerData.debug then
+	if playerData.debug then --draws the last performed move, buttonInputHandler and inputHandler underneath Brawler
 		if playerData.inputHandler then
 			local inputs = playerData.inputHandler
 			graphics.print(inputs, player.x, player.y+20, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
