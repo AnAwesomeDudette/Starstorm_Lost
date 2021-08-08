@@ -355,12 +355,14 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 	end
 	
-	local function cancelIn(frame, buffer, cancel) --cancels the move on a given frame, but gives finer control over the remaining buffer and currentNormal
+	local function cancelIn(frame, buffer, doReset, doCancel) --cancels the move on a given frame, but gives finer control over the remaining buffer and currentNormal
 		if player.subimage == frame then
 			player.subimage = player.sprite.frames
 			playerData.bufferTimer2 = buffer
-			if cancel then
+			if doReset then
 				playerData.currentNormal = 0
+			end
+			if doCancel then
 				cancel()
 			end
 		end
@@ -462,7 +464,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 		
 		if playerData.currentNormal == 0 then
-			cancelIn(5, 30, true)
+			cancelIn(5, 30, true, false)
 			--cancelOn(5)
 		elseif playerData.currentNormal == 1 then
 			cancelOn(10) --i really need to revamp cancelIn because it's kinda useless
