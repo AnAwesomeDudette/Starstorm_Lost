@@ -9,7 +9,7 @@ Color.fromHex(0xEAB779))
 
 SurvivorVariant.setInfoStats(newVariant, {{"Strength", 9}, {"Vitality", 6}, {"Toughness", 9}, {"Agility", 5}, {"Difficulty", 10}, {"Fluff", 7}}) 
 
-SurvivorVariant.setDescription(newVariant, "Wrestled with a bear bare-fisted and, well, bear was buried with utmost respect. \nTrue Brawler can use Special Moves and Normal Combos, \nusing directions and ability presses as inputs to perform them. \nFor Specials, the last direction held is most important to performing the move. \n&g&Lower zoom scale to see all Special Moves.&!&")
+SurvivorVariant.setDescription(newVariant, "Wrestled with a bear bare-fisted and, well, bear was buried with utmost respect. \nTrue Brawler can use Special Moves and Normal Combos, \nusing directions and ability presses as inputs to perform them. \nFor Specials, the last direction held is most important to performing the move. \n&g&Lower zoom scale to see full movelist.&!&")
 
 local sprSkills = Sprite.load("True_Brawler_Skills", "Survivors/Brawler/skills", 7, 0, 0)
 
