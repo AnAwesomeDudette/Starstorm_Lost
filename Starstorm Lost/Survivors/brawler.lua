@@ -82,9 +82,9 @@ Brawler:addCallback("init", function(player)
 	local playerAc = player:getAccessor()
 	local playerData = player:getData()
 	
-	if modloader.checkFlag("ssl_truebrawler") then
+	--[[if modloader.checkFlag("ssl_truebrawler") then
 		playerData.trueBrawler = true
-	end
+	end]]
 	
 	playerData.currentInput = 5 -- number 1-9 representing one of 8 possible directions + a neutral direction
 	playerData.currentButtonInput = 0 -- number 0-4 representing one of 4 possible ability inputs + no input
