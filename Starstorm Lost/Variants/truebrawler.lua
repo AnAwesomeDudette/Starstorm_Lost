@@ -17,7 +17,7 @@ local sprSkills = Sprite.load("True_Brawler_Skills", "Survivors/Brawler/skills",
 SurvivorVariant.setLoadoutSkill(newVariant, "Heavy Punch", "Down->Downforward->Forward+Z to perform a heavy punch, severely stunning opponents for &y&300% damage.&!&", sprSkills, 1)
 SurvivorVariant.setLoadoutSkill(newVariant, "Skyward", "Down->Forward->Downforward+X to perform an invincible uppercut, hitting three times and launching opponents upwards for up to &y&700% damage.&!&", sprSkills, 2)
 SurvivorVariant.setLoadoutSkill(newVariant, "Charged Pounce", "Down->Neutral->Down+C to prepare to launch after 1 second. Pressing C further times &b&increases speed.&!& Enemies struck receive your momentum.", sprSkills, 3)
-SurvivorVariant.setLoadoutSkill(newVariant, "Ultra Suplex Hold", "Back->Downback->Down->Downforward->Forward+V to &y&grapple&!& the nearest foe, leaping to pummel them mid-air for &y&100% damage&!& & slam for &y&250% damage.&!&", sprSkills, 4)
+SurvivorVariant.setLoadoutSkill(newVariant, "Ultra Suplex Hold", "Back->Downback->Down->Downforward->Forward+V to &y&grapple&!& the nearest foe, pummeling them mid-air for &y&100% damage&!& and slamming for &y&250% damage.&!&", sprSkills, 4)
 SurvivorVariant.setLoadoutSkill(newVariant, "One-Two", "Z->Z to peform a second punch quickly after the first. Can be cancelled into special moves.", sprSkills, 5)
 SurvivorVariant.setLoadoutSkill(newVariant, "Three-Hit Jab Combo", "Z->Z->Z to peform a fast three combination attack. The final hit stuns enemies for 150% damage.", sprSkills, 6)
 SurvivorVariant.setLoadoutSkill(newVariant, "Pursuit", "Z->X->C to perform a great leap. If an enemy was thrown, leap higher to chase them into the air.", sprSkills, 7) 
