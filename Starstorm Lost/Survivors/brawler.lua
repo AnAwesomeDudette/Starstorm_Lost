@@ -206,14 +206,16 @@ Brawler:addCallback("useSkill", function(player, skill)
 		
 		elseif skill == 2 then
 			-- X skill
-			if playerData.currentInput == 3 then
+			
+			--for the sake of leniency, a forward input is an acceptable end to the DP motion
+			if playerData.currentInput == 3 or playerData.currentInput == 6 then
 				if inputReader(2, 5) then
 					if inputReader(6, 4) then
 						playerData.currentSpecial = 2
 						playerData.debugDisplay = "623C"
 					end
 				end
-			elseif playerData.currentInput == 1 then
+			elseif playerData.currentInput == 1 or playerData.currentInput == 4 then
 				if inputReader(2, 5) then
 					if inputReader(4, 4) then
 						playerData.currentSpecial = 2
@@ -373,6 +375,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 	]]
 	
 	if skill == 1 and not player:getData().skin_skill1Override then
+		
 		-- Punch
 		if relevantFrame == 2 and playerData.currentSpecial == 0 and playerData.currentNormal == 0 then
 			sfx.PodHit:play(0.8)
@@ -413,39 +416,18 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 		
 		--One-Two / Three-Hit Jab Combo
+		
 		if playerData.currentSpecial == 0 then
-			if playerData.currentNormal == 0 then
-				--cancelOn(5)
-				cancelIn(5, 30, false)
-				if playerData.currentButtonInput == 1 then
-					if inputReader(1, 2) then
-						playerData.currentNormal = 1
-						player.subimage = 6
-						sfx.PodHit:play(0.8)
-						for i = 0, playerAc.sp do
-							local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1)
-							bullet:set("knockback", 1)
-							bullet:set("knockback_direction", player.xscale)
-							bullet:getData().shakeScreen = 1
-							bullet:getData().pushSide = 1.2 * player.xscale
-							player:getData().xAccel = 1 * player.xscale
-							if i ~= 0 then
-								bullet:set("climb", i * 8)
-							end
-						end
-					end
-				end
-			elseif playerData.currentNormal == 1 then
-				cancelOn(10) --i dont know how . i dont know why . this code only works if i use the cancelOn function. im sorry
-				if playerData.currentButtonInput == 1 then
-					if inputReader(1, 3) then
+			if playerData.currentNormal == 0 or playerData.currentNormal == 1 then
+				if playerData.currentNormal == 0 then
+					if playerData.currentButtonInput == 1 then
 						if inputReader(1, 2) then
-							playerData.currentNormal = 2
-							player.subimage = 11
+							player.subimage = 6
 							sfx.PodHit:play(0.8)
 							for i = 0, playerAc.sp do
-								local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1.5)
-								bullet:set("stun", 0.25)
+								local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1)
+								bullet:set("knockback", 1)
+								bullet:set("knockback_direction", player.xscale)
 								bullet:getData().shakeScreen = 1
 								bullet:getData().pushSide = 1.2 * player.xscale
 								player:getData().xAccel = 1 * player.xscale
@@ -453,13 +435,40 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 									bullet:set("climb", i * 8)
 								end
 							end
+							playerData.currentNormal = 1
+						end
+					end
+				elseif playerData.currentNormal == 1 then
+					if playerData.currentButtonInput == 1 then
+						if inputReader(1, 3) then
+							if inputReader(1, 2) then
+								player.subimage = 11
+								sfx.PodHit:play(0.8)
+								for i = 0, playerAc.sp do
+									local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1.5)
+									bullet:set("stun", 0.25)
+									bullet:getData().shakeScreen = 1
+									bullet:getData().pushSide = 1.2 * player.xscale
+									player:getData().xAccel = 1 * player.xscale
+									if i ~= 0 then
+										bullet:set("climb", i * 8)
+									end
+								end
+								playerData.currentNormal = 2
+							end
 						end
 					end
 				end
 			end
-			if playerData.currentNormal == 2 then
-				lastFrame()
-			end
+		end
+		
+		if playerData.currentNormal == 0 then
+			--cancelIn(5, 30, false)
+			cancelOn(5)
+		elseif playerData.currentNormal == 1 then
+			cancelOn(10) --i really need to revamp cancelIn because it's kinda useless
+		elseif playerData.currentNormal == 2 then
+			lastFrame()
 		end
 		
 	elseif skill == 2 and not player:getData().skin_skill2Override then
@@ -662,15 +671,19 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		if playerData.currentSpecial == 4 then
 			if relevantFrame == 2 then
 				if playerData.xAccel then --increases hitbox length depending on current xAccel
-					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 30*math.max(1, math.sqrt(math.abs(playerData.xAccel))), (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
+					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 40*math.max(1, math.sqrt(math.abs(playerData.xAccel))), (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
 					bullet:getData().buster = true
 					bullet:set("stun", 0.5)
-					bullet:set("max_hit_number", 1)
+					if playerData.canBusterBosses == false then
+						bullet:set("max_hit_number", 1)
+					end
 				else 
-					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 25, (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
+					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 35, (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
 					bullet:getData().buster = true
 					bullet:set("stun", 0.5)
-					bullet:set("max_hit_number", 1)
+					if playerData.canBusterBosses == false then
+						bullet:set("max_hit_number", 1)
+					end
 				end
 			end
 			
@@ -969,6 +982,7 @@ Brawler:addCallback("step", function(player)
 			if playerData.currentNormal > 0 then
 				playerData.currentNormal = 0
 			end --failsafe, if the combo did not reset currentNormal at the end
+			--THIS . REALLY NEEDS A REWORK . GOT DAM
 			playerData.bufferTimer2 = 45
 			for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
 		end
