@@ -63,7 +63,7 @@ Brawler.endingQuote = "..and so he left, wrestling with his past."
 
 callback.register("postLoad", function() -- AWESOME LOOK HERE
 	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Brawler), {{"Strength", 9}, {"Vitality", 6}, {"Toughness", 9}, {"Agility", 5}, {"Difficulty", 4}, {"Fluff", 7}})
-	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Brawler), "Wrestled with a bear bare-fisted and, well, bear was buried with utmost respect. \n\nThis Brawler gets the job done, with standard edition technique and power.")
+	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Brawler), "Wrestled with a bear bare-fisted and, well, bear was buried with utmost respect. \n\nThis Brawler gets the job done, with standard edition technique and power. \n&or&His true potential rests.&!&")
 	if modloader.checkFlag("ssl_debug") then
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Heavy Punch", "Down->Downforward->Forward+Z to perform a heavy punch, severely stunning opponents for &y&300% damage.&!& &g&(Lower zoom scale to see all Special Moves.)&!&", sprSkills, 1)
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Skyward", "Forward->Down->Downforward+X to perform an invincible uppercut, hitting three times and launching opponents upwards for up to &y&700% damage.&!&", sprSkills, 2)
