@@ -1022,6 +1022,12 @@ Brawler:addCallback("step", function(player)
 	if playerData.currentSpecial ~= 0 then --test
 		for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
 	end -- causes specials to automatically reset the ability/skill input handler
+	
+	if player:get("activity") == 30 then
+		playerData.currentNormal = 0
+		playerData.currentButtonInput = 0
+		for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
+	end --at no reasonable point should the player be able to perform a combo on a ladder . if you disagree put it in the complaints box
 
 	if not playerData.trueBrawler and not playerData.debug then
 		for i=1, 6 do playerData.buttonInputHandler[i] = 0 end 
