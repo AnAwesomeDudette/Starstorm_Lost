@@ -1,5 +1,5 @@
 local path = "Survivors/Brawler/"
-
+--Credit to bruh#6900 and swuff★#2224 for a great deal of visual design and mechanical design inspiration~! ^^
 local Brawler = Survivor.new("Brawler")
 
 require("Variants/truebrawler")--um, dunno if i can do this ? only one way to fihnd out 
