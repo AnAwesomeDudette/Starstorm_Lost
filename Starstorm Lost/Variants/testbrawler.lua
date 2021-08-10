@@ -56,35 +56,6 @@ if player:get("activity") == 0 then
 	player:survivorActivityState(1, player:getAnimation("shoot1"), 0.25, true, true)
 end
 end)
---[[The way that I have to have this work, is by binding it by the end input. For example, if an ability uses
-Utility->Ultimate, it has to be bound to Ultimate, and then check for a Utility input.]]
-SurvivorVariant.setSkill(newVariant, 2, function(player)
-local function check(input) --finds the relevant input
-	if player:getData().buttonInputHandler[2] == input then
-		return true;
-	end
-end
-
-
-end)
-
-SurvivorVariant.setSkill(newVariant, 3, function(player)
-local function check(input)
-	if player:getData().buttonInputHandler[2] == input then
-		return true;
-	end
-end
-
-end)
-
-SurvivorVariant.setSkill(newVariant, 4, function(player)
-local function check(input)
-	if player:getData().buttonInputHandler[2] == input then
-		return true;
-	end
-end
-
-end)
 
 callback.register("onPlayerStep", function(player)
 	if SurvivorVariant.getActive(player) == newVariant then
@@ -94,67 +65,90 @@ callback.register("onPlayerStep", function(player)
 				return true;
 			end
 		end
+		
+		local function cancel()
+			for i=1, 6 do player:getData().buttonInputHandler[i] = 0 end
+		end
 --[[The only way I found for this to work is to function purely in the step callback.]]
+local bufferWindow = 20 --sets how long an input can be made until it is cancelled and given default light version
 --X ending skills
 if player:getData().buttonInputHandler[1] == 2 then
-if player:get("activity") == 0 then 
-	if player:getData().mainInputTimer == 0 then
-		player:getData().mainInputTimer = 20
-	elseif player:getData().buttonInputHandler[2] ~= 0 then
-		player:getData().mainInputTimer = 0 --beginning
-		if check(2) then
-			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
-		elseif check(3) then
-			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, false)
-		elseif check(4) then
-			player:survivorActivityState(4, player:getAnimation("shoot4"), 0.25, true, false)
+	if player:get("activity") == 0 then 
+		if player:getData().mainInputTimer == 0 then
+			player:getData().mainInputTimer = bufferWindow
+		elseif player:getData().buttonInputHandler[2] ~= 0 then
+			player:getData().mainInputTimer = 0 --beginning
+			if check(2) then
+				player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
+			elseif check(3) then
+				player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, false)
+			elseif check(4) then
+				player:survivorActivityState(4, player:getAnimation("shoot4"), 0.25, true, false)
+			end
+			cancel() --end
 		end
-		for i=1, 6 do player:getData().buttonInputHandler[i] = 0 end --end
 	end
-end
 end
 --C ending skills
 if player:getData().buttonInputHandler[1] == 3 then
-if player:get("activity") == 0 then
-	if player:getData().mainInputTimer == 0 then
-		player:getData().mainInputTimer = 20
-	elseif player:getData().buttonInputHandler[2] ~= 0 then
-		player:getData().mainInputTimer = 0
-		if check(2) then
-			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
-			player:getData().currentSpecial = 6
-		elseif check(3) then
-			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, true)
-			player:getData().currentSpecial = 7
-		elseif check(4) then
-			player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)
-			player:getData().currentSpecial = 4
+	if player:get("activity") == 0 then
+		if player:getData().mainInputTimer == 0 then
+			player:getData().mainInputTimer = bufferWindow
+		elseif player:getData().buttonInputHandler[2] ~= 0 then
+			player:getData().mainInputTimer = 0
+			if check(2) then
+				player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
+				player:getData().currentSpecial = 6
+			elseif check(3) then
+				player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, true)
+				player:getData().currentSpecial = 7
+			elseif check(4) then
+				player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)
+				player:getData().currentSpecial = 4
+			end
+			cancel()
 		end
-		for i=1, 6 do player:getData().buttonInputHandler[i] = 0 end
 	end
-end
 end
 --V ending skills	
 if player:getData().buttonInputHandler[1] == 4 then
-if player:get("activity") == 0 then
-	if player:getData().mainInputTimer == 0 then
-		player:getData().mainInputTimer = 20
-	elseif player:getData().buttonInputHandler[2] ~= 0 then
-		player:getData().mainInputTimer = 0
-		if check(2) then
-			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
-			player:getData().currentSpecial = 2
-		elseif check(3) then
-			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, true)
-			player:getData().currentSpecial = 3
-		elseif check(4) then
-			player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)
-			player:getData().currentSpecial = 5
+	if player:get("activity") == 0 then
+		if player:getData().mainInputTimer == 0 then
+			player:getData().mainInputTimer = bufferWindow
+		elseif player:getData().buttonInputHandler[2] ~= 0 then
+			player:getData().mainInputTimer = 0
+			if check(2) then
+				player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
+				player:getData().currentSpecial = 2
+			elseif check(3) then
+				player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, true)
+				player:getData().currentSpecial = 3
+			elseif check(4) then
+				player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)
+				player:getData().currentSpecial = 5
+			end
+			cancel()
 		end
-		for i=1, 6 do player:getData().buttonInputHandler[i] = 0 end
 	end
 end
+--20 frame window enders
+
+if player:getData().buttonInputHandler[1] == 2 and player:getData().buttonInputHandler[2] == 0 and player:getData().mainInputTimer == 1 then
+	player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
+	cancel()
 end
+
+if player:getData().buttonInputHandler[1] == 3 and player:getData().buttonInputHandler[2] == 0 and player:getData().mainInputTimer == 1 then
+	player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, false)
+	cancel()
+end
+
+if player:getData().buttonInputHandler[1] == 4 and player:getData().buttonInputHandler[2] == 0 and player:getData().mainInputTimer == 1 then
+	player:survivorActivityState(4, player:getAnimation("shoot4"), 0.25, true, false)
+	cancel()
+end
+
+
 --[[]]
 		if player:getData().mainInputTimer > 0 then
 			player:getData().mainInputTimer = player:getData().mainInputTimer - 1
