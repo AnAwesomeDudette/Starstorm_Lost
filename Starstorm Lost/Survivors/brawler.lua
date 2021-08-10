@@ -851,7 +851,7 @@ Brawler:addCallback("step", function(player)
 		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 40 / 19, 20 / 4, 2.5)
 		bullet:set("knockup", 3)
 		elseif playerData.currentSpecial == 5 then
-		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 8)
+		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 9)
 		bullet:set("knockup", 5)
 		end
 		playerData.busterContact = false
@@ -1212,15 +1212,16 @@ Brawler:addCallback("step", function(player)
 			if onScreen(player) then
 				misc.shakeScreen(3 + lastVspeed)
 			end
-			
-			local mult = lastVspeed * 0.5
-			for i = 0, player:get("sp") do
-				local bullet = player:fireExplosion(player.x, player.y, 30 / 19, 5 / 4, math.min(1 + mult, 10))
-				bullet:set("stun", 1)
-				bullet:set("knockup", mult)
-				bullet:set("knockback", mult)
-				if i ~= 0 then
-					bullet:set("climb", i * 8)
+			if playerData.currentSpecial ~= 5 then
+				local mult = lastVspeed * 0.5
+				for i = 0, player:get("sp") do
+					local bullet = player:fireExplosion(player.x, player.y, 30 / 19, 5 / 4, math.min(1 + mult, 10))
+					bullet:set("stun", 1)
+					bullet:set("knockup", mult)
+					bullet:set("knockback", mult)
+					if i ~= 0 then
+						bullet:set("climb", i * 8)
+					end
 				end
 			end
 			playerData.awaitingGroundImpact = nil
@@ -1228,7 +1229,7 @@ Brawler:addCallback("step", function(player)
 			sfx.RiotGrenade:play(0.9)
 			--player:setAnimation("jump", player:getData()._ogJumpBk)
 			player.subimage = 5
-			if playerData.busterTarget and (playerData.currentSpecial == 4 or playerData.currentSpecial == 5) then --not sure if i need this ? --i do need it . gog
+			if playerData.busterTarget and playerData.busterTarget:isValid() and (playerData.currentSpecial == 4 or playerData.currentSpecial == 5) then --not sure if i need this ? --i do need it . gog
 				playerData.busterContact = true
 			end
 			player:set("pVspeed", -2)
