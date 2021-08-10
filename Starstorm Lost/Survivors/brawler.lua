@@ -515,8 +515,9 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			for i = 0, playerAc.sp do
 				local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 2.5)
 				--bullet:set("stun", 1)
-				bullet:set("knockback", 5)
+				bullet:set("knockback", 11)
 				bullet:set("knockback_direction", player.xscale)
+				bullet:set("knockup", 1)
 				bullet:getData().canPursue = true
 				bullet:getData().pushSide = 4 * player.xscale * -1
 				if i ~= 0 then
