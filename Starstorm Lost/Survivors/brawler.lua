@@ -3,7 +3,27 @@ local path = "Survivors/Brawler/"
 local Brawler = Survivor.new("Brawler")
 
 require("Variants/truebrawler")--um, dunno if i can do this ? only one way to fihnd out 
+require("Variants/testbrawler")
 --ah, yeah i can do that :)
+
+--for the record, it's known that Buster (special 5) causes "attempted to access invalid instance" errors sometimes
+
+
+		--[[Command List: 
+	1 = 236/214Z (Heavy Punch), 
+	2 = 623/421X (Skyward), 
+	3 = 252C (Charge Pounce), 
+	4 = 41236/63214V (Ultra Suplex Hold)
+	5 = (Buster)
+	6 = (Remover)
+	7 = (Strong Pounce)
+	
+	Normals List:
+	1 = ZZ (Jab 2)
+	2 = ZZZ (Jab 3 Finisher)
+	3 = ZXC (Pursuit)]]
+
+
 
 --local sBrawlerShoot1 = Sound.load("BrawlerShoot1", path.."skill1")
 
@@ -110,7 +130,8 @@ Brawler:addCallback("init", function(player)
 	playerData.inputs = {} -- used to read cardinal direction inputs, helps with gamepad functionality (still needs tweaked)
 	for i=1, 4 do playerData.inputs[i] = 0 end
 	
-	--buster refers to Suplex
+	--buster refers to any sort of command grab, something that grabs the opponent and moves them with the player instead of just hitting them
+	--likewise, buster also generally refers to Suplex
 	playerData.busterTarget = false --accessor that points towards enemy/enemies hit with Suplex
 	playerData.busterContact = false --boolean that triggers when contact is made with the ground while Suplex occurs
 	playerData.canBusterBosses = false --self explanatory
@@ -121,7 +142,7 @@ Brawler:addCallback("init", function(player)
 	playerData.canPursue = false --boolean that determines if pursuit should go max range
 	
 	playerData.canCancel = true --self explanatory, but not yet implemented
-	
+		
 	--info on how inputs are handled in step callback
 	--info on how inputs are read in useSkill callback
 	--info on what desperately needs synced can be found by ctrl-F (--needs synced)
@@ -177,7 +198,7 @@ Brawler:addCallback("useSkill", function(player, skill)
 			end
 		end
 	end
-	
+if not playerData.skin_fullSkillOverride then --[]
 	if player:get("activity") == 0 then 
 		local cd = true					
 
@@ -265,7 +286,7 @@ Brawler:addCallback("useSkill", function(player, skill)
 				end
 			end
 			
-			if playerData.currentSpecial ~= 4 then
+			if playerData.currentSpecial ~= 4 and playerData.currentSpecial ~= 5 then
 				if playerAc.scepter > 0 then
 					player:survivorActivityState(4, player:getAnimation("shoot5"), 0.25, true, false)
 				else
@@ -307,18 +328,8 @@ Brawler:addCallback("useSkill", function(player, skill)
 					done by either setting them before they execute, or altering them while they're occurring.
 			]]
 			
-		--[[Command List: 
-	1 = 236/214Z (Heavy Punch), 
-	2 = 623/421X (Skyward), 
-	3 = 252C (Charge Pounce), 
-	4 = 41236/63214V (Ultra Suplex Hold)
-	
-	Normals List:
-	1 = ZZ (Jab 2)
-	2 = ZZZ (Jab 3 Finisher)
-	3 = ZXC (Pursuit)]]
 	end
-
+end --[]
 
 	
 end)
@@ -418,6 +429,9 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 		
 		--One-Two / Three-Hit Jab Combo
+		if relevantFrame == 1 then --stupid dumb poopie doodoo check dumb stinky .
+			playerData.currentNormal = 0
+		end
 		if playerData.currentSpecial == 0 then
 			if playerData.currentNormal == 0 or playerData.currentNormal == 1 then
 				if playerData.currentNormal == 0 then
@@ -489,6 +503,25 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					bullet:set("climb", i * 8)
 				end
 				player:set("pVspeed", -2.5)
+			end
+		end
+		
+		-- Remover
+		if relevantFrame == 1 and playerData.currentSpecial == 6 then
+			if onScreen(player) then
+				misc.shakeScreen(2)
+			end
+			sfx.Reflect:play(0.6, 0.9)
+			for i = 0, playerAc.sp do
+				local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 2.5)
+				--bullet:set("stun", 1)
+				bullet:set("knockback", 5)
+				bullet:set("knockback_direction", player.xscale)
+				bullet:getData().canPursue = true
+				bullet:getData().pushSide = 4 * player.xscale * -1
+				if i ~= 0 then
+					bullet:set("climb", i * 8)
+				end
 			end
 		end
 		
@@ -577,6 +610,44 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			end
 		end
 		
+		-- Strong Pounce
+		if playerData.currentNormal == 0 then
+			if playerData.currentSpecial == 7 then
+				if relevantFrame == 1 then
+					sfx.PodDeath:play(1.3)
+					local target = nil
+					for _, instance2 in ipairs(pobj.actors:findAll()) do
+						if instance2:get("team") ~= playerAc.team then
+							if player.xscale > 0 and instance2.x > player.x - 10 or player.xscale < 0 and instance2.x < player.x + 10 then
+								local dis = distance(player.x, player.y, instance2.x, instance2.y)
+								if not target or dis < target.dis then
+									if dis < 200 then
+										target = {inst = instance2, dis = dis}
+									end
+								end
+							end
+						end
+					end
+					local xx = 4 * player.xscale
+					local yy = 0
+					if target then
+						target = target.inst
+						if target:isValid() then
+							local angle = posToAngle(player.x, target.y, target.x, player.y)
+							local angleRad = math.rad(angle)
+							xx = math.cos(angleRad) * 5
+							yy = math.sin(angleRad) * 5
+						end
+					end
+				
+					player:getData().awaitingContact = target
+					player:getData().awaitingContactTimer = 30
+					player:getData().xAccel = xx * 1.25
+					player:set("pVspeed", yy*2)
+				end
+			end
+		end
+		
 		-- Charge Pounce
 		if playerData.currentNormal == 0 then
 			if playerData.currentSpecial == 3 then
@@ -649,7 +720,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		
 	elseif skill == 4 and not player:getData().skin_skill4Override then
 		-- Dive Drop
-		if playerData.currentSpecial ~= 4 then
+		if playerData.currentSpecial ~= 4 and playerData.currentSpecial ~= 5 then
 			playerAc.pHspeed = math.approach(playerAc.pHspeed, 0, 0.025)
 			if playerAc.moveRight == 1 then
 				playerAc.pHspeed = playerAc.pHmax
@@ -658,6 +729,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			end
 			
 			if relevantFrame == 2 then
+				playerData.doMidAirAttack = true
 				player:set("pVspeed", math.min(player:get("pVspeed") -3, -2))
 			end
 			if relevantFrame == 4 then
@@ -689,7 +761,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			end
 			
 			if playerData.busterTarget then
-			
+
 				if player:get("invincible") < 5 then
 					player:set("invincible", 5)
 				end
@@ -702,6 +774,52 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 						playerAc.pHspeed = -playerAc.pHmax
 					end
 				else
+					playerAc.pHspeed = 0
+				end
+
+				if relevantFrame == 4 then
+					--player:set("pVspeed", math.min(player:get("pVspeed") -3, -2))
+					player:set("pVspeed", -6)
+					playerData.doMidAirAttack = true
+				end
+				if relevantFrame == 5 then
+					player:getData().awaitingGroundImpact = 300
+				end
+				if player.subimage > 5 and player:getData().awaitingGroundImpact then
+					player.subimage = 5
+				end
+			elseif relevantFrame == 3 then
+				player.subimage = player.sprite.frames
+			end
+		end
+		
+		--Buster
+		if playerData.currentSpecial == 5 then
+			if relevantFrame == 2 then
+				if playerData.xAccel then --increases hitbox length depending on current xAccel
+					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 40*math.max(1, math.sqrt(math.abs(playerData.xAccel))), (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
+					bullet:getData().buster = true
+					bullet:set("stun", 0.5)
+					if playerData.canBusterBosses == false then
+						bullet:set("max_hit_number", 1)
+					end
+				else 
+					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 35, (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
+					bullet:getData().buster = true
+					bullet:set("stun", 0.5)
+					if playerData.canBusterBosses == false then
+						bullet:set("max_hit_number", 1)
+					end
+				end
+			end
+			
+			if playerData.busterTarget then
+			
+				if player:get("invincible") < 5 then
+					player:set("invincible", 5)
+				end
+			
+				if player.subimage > 4 and player.subimage < 6 then
 					playerAc.pHspeed = 0
 				end
 
@@ -729,8 +847,13 @@ Brawler:addCallback("step", function(player)
 	-- awesome makes horrible mistakes starting here (beginning of my main code)
 	
 	if playerData.busterContact then
+		if playerData.currentSpecial == 4 then
 		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 40 / 19, 20 / 4, 2.5)
 		bullet:set("knockup", 3)
+		elseif playerData.currentSpecial == 5 then
+		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 8)
+		bullet:set("knockup", 5)
+		end
 		playerData.busterContact = false
 	end --buster :)
 	
@@ -984,8 +1107,8 @@ Brawler:addCallback("step", function(player)
 				playerData.currentNormal = 0
 			end --failsafe, if the combo did not reset currentNormal at the end
 			--THIS . REALLY NEEDS A REWORK . GOT DAM
-			playerData.bufferTimer2 = 45
 			for i=1, 6 do playerData.buttonInputHandler[i] = 0 end
+			playerData.bufferTimer2 = 45
 		end
 	end
 	
@@ -1074,11 +1197,13 @@ Brawler:addCallback("step", function(player)
 				playerData.midAirDamageTimer = nil
 			end
 		else
-			local r = 25
-			for _, actor in ipairs(pobj.actors:findAllRectangle(player.x - r, player.y - r, player.x + r, player.y + r)) do
-				if actor:get("team") ~= player:get("team") and player:collidesWith(actor, player.x, player.y) and not actor:collidesMap(actor.x, actor.y + 1) then
-					player:fireExplosion(player.x, player.y + player.yscale*10, 25 / 19, 12 / 4, 1) --used to be 27/19,27/4
-					playerData.midAirDamageTimer = 8
+			if playerData.doMidAirAttack then
+				local r = 25
+				for _, actor in ipairs(pobj.actors:findAllRectangle(player.x - r, player.y - r, player.x + r, player.y + r)) do
+					if actor:get("team") ~= player:get("team") and player:collidesWith(actor, player.x, player.y) and not actor:collidesMap(actor.x, actor.y + 1) then
+						player:fireExplosion(player.x, player.y + player.yscale*10, 25 / 19, 12 / 4, 1) --used to be 27/19,27/4
+						playerData.midAirDamageTimer = 8
+					end
 				end
 			end
 		end
@@ -1099,10 +1224,11 @@ Brawler:addCallback("step", function(player)
 				end
 			end
 			playerData.awaitingGroundImpact = nil
+			playerData.doMidAirAttack = nil
 			sfx.RiotGrenade:play(0.9)
 			--player:setAnimation("jump", player:getData()._ogJumpBk)
 			player.subimage = 5
-			if playerData.busterTarget then --not sure if i need this ?
+			if playerData.busterTarget and (playerData.currentSpecial == 4 or playerData.currentSpecial == 5) then --not sure if i need this ? --i do need it . gog
 				playerData.busterContact = true
 			end
 			player:set("pVspeed", -2)
@@ -1151,8 +1277,8 @@ end)
 
 callback.register("onStep", function() --needs synced (i thinkkk ???)
 	for _, enemy in ipairs(pobj.actors:findAll()) do
-		local enemyData = enemy:getData()
 		if enemy:isValid() then
+		local enemyData = enemy:getData()
 			if enemyData.isBustered then
 				--print("TARGET BUSTERED.")
 				enemy.angle = math.approach(enemy.angle, 90, 22*(14/enemy.sprite.height)) -- thanks neik :)
