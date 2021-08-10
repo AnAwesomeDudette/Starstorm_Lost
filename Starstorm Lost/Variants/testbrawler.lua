@@ -121,9 +121,10 @@ if player:get("activity") == 0 then
 	elseif player:getData().buttonInputHandler[2] ~= 0 then
 		player:getData().mainInputTimer = 0
 		if check(2) then
+			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
 			player:getData().currentSpecial = 6
 		elseif check(3) then
-			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, false)
+			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, true)
 			player:getData().currentSpecial = 7
 		elseif check(4) then
 			player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)
@@ -144,7 +145,7 @@ if player:get("activity") == 0 then
 			player:survivorActivityState(2, player:getAnimation("shoot2"), 0.25, true, true)
 			player:getData().currentSpecial = 2
 		elseif check(3) then
-			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, false)
+			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.25, false, true)
 			player:getData().currentSpecial = 3
 		elseif check(4) then
 			player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)
