@@ -441,20 +441,20 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					if playerData.currentButtonInput == 1 then
 						if inputReader(1, 2) then
 							player.subimage = 6
-							sfx.PodHit:play(0.8)
-							for i = 0, playerAc.sp do
-								local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1)
-								bullet:set("knockback", 1)
-								bullet:set("knockback_direction", player.xscale)
-								bullet:getData().shakeScreen = 1
-								bullet:getData().pushSide = 1.2 * player.xscale
-								player:getData().xAccel = 1 * player.xscale
-								bullet:getData().staminaReturn = 5
-								if i ~= 0 then
-									bullet:set("climb", i * 8)
-								end
-							end
 							if relevantFrame == 6 then
+								sfx.PodHit:play(0.8)
+								for i = 0, playerAc.sp do
+									local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1)
+									bullet:set("knockback", 1)
+									bullet:set("knockback_direction", player.xscale)
+									bullet:getData().shakeScreen = 1
+									bullet:getData().pushSide = 1.2 * player.xscale
+									player:getData().xAccel = 1 * player.xscale
+									bullet:getData().staminaReturn = 5
+									if i ~= 0 then
+										bullet:set("climb", i * 8)
+									end
+								end
 								playerData.currentNormal = 1
 							end
 						end
@@ -464,19 +464,19 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 						if inputReader(1, 3) then
 							if inputReader(1, 2) then
 								player.subimage = 11
-								sfx.PodHit:play(0.8)
-								for i = 0, playerAc.sp do
-									local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1.5)
-									bullet:set("stun", 0.25)
-									bullet:getData().shakeScreen = 1
-									bullet:getData().pushSide = 1.2 * player.xscale
-									player:getData().xAccel = 1 * player.xscale
-									bullet:getData().staminaReturn = 5
-									if i ~= 0 then
-										bullet:set("climb", i * 8)
-									end
-								end
 								if relevantFrame == 11 then
+									sfx.PodHit:play(0.8)
+									for i = 0, playerAc.sp do
+										local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y, 15 / 19, 5 / 4, 1.5)
+										bullet:set("stun", 0.25)
+										bullet:getData().shakeScreen = 1
+										bullet:getData().pushSide = 1.2 * player.xscale
+										player:getData().xAccel = 1 * player.xscale
+										bullet:getData().staminaReturn = 5
+										if i ~= 0 then
+											bullet:set("climb", i * 8)
+										end
+									end
 									playerData.currentNormal = 2
 								end
 							end
