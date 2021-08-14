@@ -20,7 +20,7 @@ SurvivorVariant.setLoadoutSkill(newVariant, "Skyward", "Down->Forward->Downforwa
 SurvivorVariant.setLoadoutSkill(newVariant, "Charged Pounce", "Down->Neutral->Down+C to prepare to launch after 1 second. Pressing C further times &b&increases speed.&!& Enemies struck receive your momentum.", sprSkills, 3)
 SurvivorVariant.setLoadoutSkill(newVariant, "Ultra Suplex Hold", "Back->Downback->Down->Downforward->Forward+V to &y&grapple&!& the nearest foe, pummeling them mid-air for &y&100% damage&!& and slamming for &y&250% damage.&!&", sprSkills, 4)
 SurvivorVariant.setLoadoutSkill(newVariant, "One-Two", "Z->Z to peform a second punch quickly after the first. &b&Special moves can be done quickly after the second blow.&!&", sprSkills, 5)
-SurvivorVariant.setLoadoutSkill(newVariant, "Three-Hit Jab Combo", "Z->Z->Z to peform a fast three combination attack. The final hit &b&stuns enemies&!& for &y&150% damage.&!&", sprSkills, 6)
+SurvivorVariant.setLoadoutSkill(newVariant, "Three-Hit Jab Combo", "Z->Z->Z to peform a fast three-hit combination attack. The final hit &b&stuns enemies&!& for &y&150% damage.&!&", sprSkills, 6)
 SurvivorVariant.setLoadoutSkill(newVariant, "Pursuit", "Z->X->C to perform a &b&great leap.&!& If an enemy was thrown, &b&leap higher to chase them into the air.&!&", sprSkills, 7) 
 
 --local skillSprite = Sprite.load("BluemandoSkill1", "Bluemando/Skill1", 1, 0, 0)
