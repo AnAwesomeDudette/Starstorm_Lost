@@ -90,7 +90,7 @@ callback.register("postLoad", function() -- AWESOME LOOK HERE
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Charged Pounce", "Down->Neutral->Down+C to prepare to launch after 1 second. Pressing C further times &b&increases speed.&!& Enemies struck receive your momentum.", sprSkills, 3)
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Ultra Suplex Hold", "Back->Downback->Down->Downforward->Forward+V to &y&grapple&!& the nearest foe, pummeling them mid-air for &y&100% damage&!& and slamming for &y&250% damage.&!&", sprSkills, 4)
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "One-Two", "Z->Z to peform a second punch quickly after the first. &b&Special moves can be done quickly after the second blow.&!&", sprSkills, 5)
-		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Three-Hit Jab Combo", "Z->Z->Z to peform a fast three combination attack. The final hit &b&stuns enemies&!& for &y&150% damage.&!&", sprSkills, 6)
+		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Three-Hit Jab Combo", "Z->Z->Z to peform a fast three-hit combination attack. The final hit &b&stuns enemies&!& for &y&150% damage.&!&", sprSkills, 6)
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Pursuit", "Z->X->C to perform a &b&great leap.&!& If an enemy was thrown, &b&leap higher to chase them into the air.&!&", sprSkills, 7)
 	end
 
@@ -136,8 +136,9 @@ Brawler:addCallback("init", function(player)
 	playerData.busterContact = false --boolean that triggers when contact is made with the ground while Suplex occurs
 	playerData.canBusterBosses = false --self explanatory
 
-	playerData.pounceCharge = 0 --counter used to increase strength of Charge Pounce when C inputs are made
+	playerData.pounceCharge = 0 --counter used to increase strength of Charge Pounce when charging inputs are made
 	playerData.pounceTimer = 0 --frame counter used to provide charge input window
+	playerData.pounceInput = "ability3" --sets the ability to be used for Charge Pounce charging inputs
 	
 	playerData.canPursue = false --boolean that determines if pursuit should go max range
 	
@@ -352,14 +353,14 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 	end
 	
 	local function lastFrame() --resets handler and currentNormal on last frame automatically
-		if player.subimage == (player.sprite.frames-1) and playerData.currentNormal > 0 then
+		if relevantFrame == (player.sprite.frames-1) and playerData.currentNormal ~= 0 then
 			playerData.currentNormal = 0
 			cancel()
 		end
 	end
 	
 	local function cancelOn(frame) --cancels the move on a given frame, resets handler and currentNormal
-		if player.subimage == frame then
+		if relevantFrame == frame then
 			player.subimage = player.sprite.frames --this is where shizzle gets frizzled, thanku neik
 			playerData.currentNormal = 0
 			cancel()
@@ -367,7 +368,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 	end
 	
 	local function cancelIn(frame, buffer, doReset, doCancel) --cancels the move on a given frame, but gives finer control over the remaining buffer and currentNormal
-		if player.subimage == frame then
+		if relevantFrame == frame then
 			player.subimage = player.sprite.frames
 			playerData.bufferTimer2 = buffer
 			if doReset then
@@ -397,6 +398,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 				--bullet:set("stun", 0.25)
 				bullet:getData().shakeScreen = 1
 				bullet:getData().pushSide = 1.2 * player.xscale
+				bullet:getData().staminaReturn = 5
 				player:getData().xAccel = 1 * player.xscale
 				if i ~= 0 then
 					bullet:set("climb", i * 8)
@@ -417,6 +419,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 						bullet:set("knockback_direction", player.xscale)
 						bullet:getData().shakeScreen = 1
 						bullet:getData().pushSide = 1.2 * player.xscale
+						bullet:getData().staminaReturn = 10
 						if not playerData.xAccel then
 							player:getData().xAccel = 1 * player.xscale
 						end
@@ -429,7 +432,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		end
 		
 		--One-Two / Three-Hit Jab Combo
-		if relevantFrame == 1 then --stupid dumb poopie doodoo check dumb stinky .
+		if player.subimage == 1 then --stupid dumb poopie doodoo check dumb stinky .
 			playerData.currentNormal = 0
 		end
 		if playerData.currentSpecial == 0 then
@@ -446,11 +449,14 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 								bullet:getData().shakeScreen = 1
 								bullet:getData().pushSide = 1.2 * player.xscale
 								player:getData().xAccel = 1 * player.xscale
+								bullet:getData().staminaReturn = 5
 								if i ~= 0 then
 									bullet:set("climb", i * 8)
 								end
 							end
-							playerData.currentNormal = 1
+							if relevantFrame == 6 then
+								playerData.currentNormal = 1
+							end
 						end
 					end
 				elseif playerData.currentNormal == 1 then
@@ -465,11 +471,14 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 									bullet:getData().shakeScreen = 1
 									bullet:getData().pushSide = 1.2 * player.xscale
 									player:getData().xAccel = 1 * player.xscale
+									bullet:getData().staminaReturn = 5
 									if i ~= 0 then
 										bullet:set("climb", i * 8)
 									end
 								end
-								playerData.currentNormal = 2
+								if relevantFrame == 11 then
+									playerData.currentNormal = 2
+								end
 							end
 						end
 					end
@@ -499,6 +508,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 				bullet:set("knockup", 7)
 				bullet:getData().canPursue = true
 				bullet:getData().pushSide = 4 * player.xscale * -1
+				bullet:getData().staminaReturn = 5
 				if i ~= 0 then
 					bullet:set("climb", i * 8)
 				end
@@ -518,6 +528,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 				bullet:set("knockback", 11)
 				bullet:set("knockback_direction", player.xscale)
 				bullet:set("knockup", 1)
+				bullet:getData().staminaReturn = 5
 				bullet:getData().canPursue = true
 				bullet:getData().pushSide = 4 * player.xscale * -1
 				if i ~= 0 then
@@ -538,6 +549,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					local bullet = player:fireExplosion(player.x + player.xscale * 6, player.y + player.yscale * 5, 15 / 19, 20 / 4, 2)
 					bullet:set("stun", 1)
 					bullet:set("knockup", 3)
+					bullet:getData().staminaReturn = 10
 					if i ~= 0 then
 						bullet:set("climb", i * 8)
 					end
@@ -549,6 +561,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					bullet:set("stun", 1)
 					bullet:set("knockup", 7)
 					bullet:getData().pushSide = 4 * player.xscale * -1
+					bullet:getData().staminaReturn = 5
 					if i ~= 0 then
 						bullet:set("climb", i * 8)
 					end
@@ -657,7 +670,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					playerData.pounceTimer = 60
 				end
 				if playerData.pounceTimer > 0 then
-					if input.checkControl("ability3", player) == input.PRESSED then --needs synced
+					if input.checkControl(playerData.pounceInput, player) == input.PRESSED then --needs synced
 					--this seriously needs to be redone with the button input system
 						playerData.pounceCharge = playerData.pounceCharge + 1
 					end
@@ -748,6 +761,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 40*math.max(1, math.sqrt(math.abs(playerData.xAccel))), (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
 					bullet:getData().buster = true
 					bullet:set("stun", 0.5)
+					bullet:getData().staminaReturn = 5
 					if playerData.canBusterBosses == false then
 						bullet:set("max_hit_number", 1)
 					end
@@ -755,6 +769,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 35, (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
 					bullet:getData().buster = true
 					bullet:set("stun", 0.5)
+					bullet:getData().staminaReturn = 5
 					if playerData.canBusterBosses == false then
 						bullet:set("max_hit_number", 1)
 					end
@@ -800,14 +815,16 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 				if playerData.xAccel then --increases hitbox length depending on current xAccel
 					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 40*math.max(1, math.sqrt(math.abs(playerData.xAccel))), (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
 					bullet:getData().buster = true
-					bullet:set("stun", 0.5)
+					bullet:set("stun", 1)
+					bullet:getData().staminaReturn = 5
 					if playerData.canBusterBosses == false then
 						bullet:set("max_hit_number", 1)
 					end
 				else 
 					local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 35, (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
 					bullet:getData().buster = true
-					bullet:set("stun", 0.5)
+					bullet:set("stun", 1)
+					bullet:getData().staminaReturn = 5
 					if playerData.canBusterBosses == false then
 						bullet:set("max_hit_number", 1)
 					end
@@ -851,9 +868,11 @@ Brawler:addCallback("step", function(player)
 		if playerData.currentSpecial == 4 then
 		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 40 / 19, 20 / 4, 2.5)
 		bullet:set("knockup", 3)
+		bullet:getData().staminaReturn = 30
 		elseif playerData.currentSpecial == 5 then
 		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 9)
 		bullet:set("knockup", 5)
+		bullet:getData().staminaReturn = 40
 		end
 		playerData.busterContact = false
 	end --buster :)
@@ -1178,6 +1197,7 @@ Brawler:addCallback("step", function(player)
 				else
 					bullet:set("knockup", 1)
 				end
+				bullet:getData().staminaReturn = 20
 				playerData.awaitingContact = nil
 				if i ~= 0 then
 					bullet:set("climb", i * 8)
@@ -1217,6 +1237,7 @@ Brawler:addCallback("step", function(player)
 				local mult = lastVspeed * 0.5
 				for i = 0, player:get("sp") do
 					local bullet = player:fireExplosion(player.x, player.y, 30 / 19, 5 / 4, math.min(1 + mult, 10))
+					bullet:getData().staminaReturn = 40
 					bullet:set("stun", 1)
 					bullet:set("knockup", mult)
 					bullet:set("knockback", mult)
@@ -1328,6 +1349,12 @@ callback.register("onPlayerDraw", function(player)
 		if playerData.debugDisplay then
 			graphics.print(playerData.debugDisplay, player.x, player.y+50, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
 		end
+		if playerData.currentStamina then
+			graphics.print("Stamina: "..math.floor(playerData.currentStamina), player.x, player.y+65, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
+		end
+	end
+	if playerData.currentStamina then
+		customBar(player.x - 15, player.y + 10, player.x + 15, player.y + 11, playerData.currentStamina, playerData.maxStamina, true)
 	end
 end)	
 
