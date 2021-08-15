@@ -1354,7 +1354,7 @@ callback.register("onPlayerDraw", function(player)
 		end
 	end
 	if playerData.currentStamina then
-		customBar(player.x - 15, player.y + 10, player.x + 15, player.y + 11, playerData.currentStamina, playerData.maxStamina, true)
+	--	customBar(player.x - 15, player.y + 10, player.x + 15, player.y + 11, playerData.currentStamina, playerData.maxStamina, true)
 	end
 end)	
 
