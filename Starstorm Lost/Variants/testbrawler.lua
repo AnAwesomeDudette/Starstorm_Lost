@@ -52,6 +52,7 @@ callback.register("onSkinInit", function(player, skin)
 		player:getData().currentStamina = 80
 		player:getData().newStamina = 80
 		player:getData().maxStamina = 100
+		player:getData().staminaRecharge = 5*60
 		player:getData().pounceInput = "ability4"
 	end
 --[[	if skin == newVariant then
@@ -210,6 +211,17 @@ callback.register("onPlayerStep", function(player)
 		if player:getData().mainInputTimer > 0 then
 			player:getData().mainInputTimer = player:getData().mainInputTimer - 1
 		end
+		
+		if player:get("activity") < 1 or player:get("activity") > 4 then
+		local rechargeRate = 0.3
+			if player:getData().staminaRecharge ~= 0 then
+				player:getData().staminaRecharge = player:getData().staminaRecharge - 1
+			else
+				player:getData().newStamina = math.approach(player:getData().newStamina, player:getData().maxStamina, rechargeRate)
+			end
+		else
+			player:getData().staminaRecharge = 5*60
+		end
 	end
 end)
 
@@ -226,6 +238,21 @@ callback.register("preHit", function(damager, hit) --needs synced (i think ?)
 			end
 		end
 	end
+end)
+
+callback.register("onPlayerDraw", function(player)
+	local playerData = player:getData()
+	if playerData.currentStamina and playerData.newStamina then
+        graphics.color(Color.BLACK)
+        graphics.rectangle(player.x - 15, player.y + 8, player.x + 13, player.y + 10)
+        graphics.color(Color.AQUA)
+        graphics.setBlendMode("additive")
+        graphics.alpha(0.4)
+        --graphics.line(player.x - 13, player.y + 9, player.x + playerData.newStamina / 5 - 1, player.y + 9)
+        --graphics.line(player.x - 13, player.y + 9, player.x + playerData.currentStamina / 5 - 1, player.y + 9)
+		graphics.line(player.x - 13, player.y + 10, player.x - 13 + playerData.newStamina/3.9, player.y + 10)
+        graphics.line(player.x - 13, player.y + 10, player.x - 13 + playerData.currentStamina/3.9, player.y + 10)
+    end
 end)
 
 end)
