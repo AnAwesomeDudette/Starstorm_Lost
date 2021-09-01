@@ -17,6 +17,7 @@ require("Variants/testbrawler")
 	5 = (Buster)
 	6 = (Remover)
 	7 = (Strong Pounce)
+	8 = Wrath of a Raging Bear
 	
 	Normals List:
 	1 = ZZ (Jab 2)
@@ -45,6 +46,7 @@ local sprites = {
 	shoot4 = Sprite.load("Brawler_Shoot4", path.."shoot4", 7, 10, 32),
 	shoot4_1 = Sprite.load("Brawler_Shoot4_1", path.."ULTRASUPLEXHOLD", 8, 10, 32),
 	shoot5 = Sprite.load("Brawler_Shoot5", path.."shoot4", 7, 10, 32),
+	shoot6 = Sprite.load("Brawler_Shoot6", path.."AkumaAssets", 10, 6, 19)
 }
 
 local sprSkills = Sprite.load("Brawler_Skills", path.."skills", 7, 0, 0)
@@ -143,6 +145,9 @@ Brawler:addCallback("init", function(player)
 	playerData.canPursue = false --boolean that determines if pursuit should go max range
 	
 	playerData.canCancel = true --self explanatory, but not yet implemented
+	
+	playerData.wrath = false --controls the wrath of a raging bear
+	playerData.doWrath = true --weird dumb workaround :c
 		
 	--info on how inputs are handled in step callback
 	--info on how inputs are read in useSkill callback
@@ -199,8 +204,23 @@ Brawler:addCallback("useSkill", function(player, skill)
 			end
 		end
 	end
+	local function inputReader2(input, window)
+		if player:getData().buttonInputHandler then
+		local inputHandler2 = player:getData().buttonInputHandler
+			if inputHandler2[window] == input then
+				return true;
+			end
+		end
+	end
+	
 if not playerData.skin_fullSkillOverride then --[]
-	if player:get("activity") == 0 then 
+	if skill == 4 and playerData.doWrath and player:get("activity") ~= 4 then
+		playerData.doWrath = false
+		playerData.currentSpecial = 8
+		playerData.debugDisplay = "ZZ->CV (thanks swuff)"
+		player:survivorActivityState(4, player:getAnimation("shoot6"), 0.05, false, true)
+		player:activateSkillCooldown(4)
+	elseif player:get("activity") == 0 then 
 		local cd = true					
 
 		if skill == 1 then
@@ -260,6 +280,16 @@ if not playerData.skin_fullSkillOverride then --[]
 		elseif skill == 4 then
 			-- V skill
 			
+			--oh god im really doing this . why am i doing this . why
+			if inputReader2(1, 4) and inputReader2(1, 3) and (inputReader2(3, 2) or player:getData().xAccel) then
+				if inputReader(6, 2) or inputReader(4, 2) then
+					player.subimage = player.sprite.frames
+					playerData.currentSpecial = 8
+					playerData.doWrath = true
+					cd = false
+				end
+			end
+			
 			--for the sake of leniency, a down input isnt necessary in the half circle motion
 			if playerData.currentInput == 4 then
 					if inputReader(6, 8) then
@@ -287,7 +317,7 @@ if not playerData.skin_fullSkillOverride then --[]
 				end
 			end
 			
-			if playerData.currentSpecial ~= 4 and playerData.currentSpecial ~= 5 then
+			if playerData.currentSpecial ~= 4 and playerData.currentSpecial ~= 5 and playerData.currentSpecial ~= 8 then
 				if playerAc.scepter > 0 then
 					player:survivorActivityState(4, player:getAnimation("shoot5"), 0.25, true, false)
 				else
@@ -490,7 +520,9 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 			cancelIn(5, 30, true, false)
 			--cancelOn(5)
 		elseif playerData.currentNormal == 1 then
-			cancelOn(10) --i really need to revamp cancelIn because it's kinda useless
+			cancelIn(10, 15, true, false)
+			--cancelOn(10) 
+			--i really need to revamp cancelIn because it's kinda useless
 		elseif playerData.currentNormal == 2 then
 			lastFrame()
 		end
@@ -734,7 +766,7 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 		
 	elseif skill == 4 and not player:getData().skin_skill4Override then
 		-- Dive Drop
-		if playerData.currentSpecial ~= 4 and playerData.currentSpecial ~= 5 then
+		if playerData.currentSpecial ~= 4 and playerData.currentSpecial ~= 5 and playerData.currentSpecial ~= 8 then
 			playerAc.pHspeed = math.approach(playerAc.pHspeed, 0, 0.025)
 			if playerAc.moveRight == 1 then
 				playerAc.pHspeed = playerAc.pHmax
@@ -855,6 +887,62 @@ Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 				player.subimage = player.sprite.frames
 			end
 		end
+		--Wrath of a Raging Bear
+		if playerData.currentSpecial == 8 then
+
+			if relevantFrame == 1 then
+				playerData.wrath = true
+			end
+			if relevantFrame == 3 then
+				misc.setTimeStop(100)
+			end
+			if playerData.wrath == true then
+				player.subimage = 2
+				player:set("pHspeed", playerAc.pHmax * 1.5 * player.xscale)
+				local r = 8
+				for _, actor in ipairs(ParentObject.find("actors"):findAllRectangle(player.x - r, player.y - r, player.x + r, player.y + r)) do 
+					if actor:get("team") ~= player:get("team") then
+						playerData.wrath = false
+						local bullet = player:fireBullet(player.x + player.xscale * -4, player.y, player:getFacingDirection(), 40*math.max(1, math.sqrt(math.abs(playerData.xAccel or 1))), (1/playerAc.damage), nil, DAMAGER_NO_PROC --[[+ DAMAGER_NO_RECALCULATE]])
+						player.subimage = 3
+						bullet:getData().buster = true
+						bullet:getData().frickingDie = 5*60
+						bullet:set("stun", 1.6)
+					end
+				end
+			elseif relevantFrame == 4 then
+				playerData.busterTarget = false
+				playerData.busterContact = false
+			--Fcucking augury code
+				
+				misc.shakeScreen(10)
+				local flash = obj.WhiteFlash:create(0, 0)
+				flash.blendColor = Color.BLACK
+				flash.alpha = 0.85
+				flash:set("rate", 0.006)
+				for _, actor in ipairs(pobj.actors:findAll()) do
+					local actorObj = actor:getObject()
+					if actor:get("team") ~= player:get("team") then
+						if onScreen(actor) and global.quality > 1 then
+							local sprite = actor.sprite or spr.Nothing
+							for i = 0, 10 do
+								local xx = math.random(actor.x - sprite.xorigin + sprite.boundingBoxLeft, actor.x - sprite.xorigin + sprite.boundingBoxRight)
+								local yy = math.random(actor.y - sprite.yorigin + sprite.boundingBoxTop, actor.y - sprite.yorigin + sprite.boundingBoxBottom)
+								par.Dust2:burst("above", xx, yy, 1, Color.BLACK)
+								par.TempleSnow:burst("above", xx, yy, 1, Color.BLACK)
+							end
+						end
+						actor.blendColor = Color.BLACK
+						actor:kill()
+						actor:getData().frickingDie = 3*60
+					end
+				end
+				misc.director:set("points", 0)
+				misc.director:setAlarm(1, 200)
+			--real
+			end
+
+		end
 	end
 end)
 
@@ -862,17 +950,19 @@ Brawler:addCallback("step", function(player)
 	local playerAc = player:getAccessor()
 	local playerData = player:getData()
 	
+	print(player:get("activity"))
+	
 	-- awesome makes horrible mistakes starting here (beginning of my main code)
 	
 	if playerData.busterContact then
 		if playerData.currentSpecial == 4 then
-		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 40 / 19, 20 / 4, 2.5)
-		bullet:set("knockup", 3)
-		bullet:getData().staminaReturn = 30
+			local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 40 / 19, 20 / 4, 2.5)
+			bullet:set("knockup", 3)
+			bullet:getData().staminaReturn = 30
 		elseif playerData.currentSpecial == 5 then
-		local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 9)
-		bullet:set("knockup", 5)
-		bullet:getData().staminaReturn = 40
+			local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 9)
+			bullet:set("knockup", 5)
+			bullet:getData().staminaReturn = 40
 		end
 		playerData.busterContact = false
 	end --buster :)
@@ -1177,6 +1267,10 @@ Brawler:addCallback("step", function(player)
 		for i=1, 10 do playerData.inputHandler[i] = 5 end
 	end --disables normal combos and special moves entirely if the player doesn't have the trueBrawler flag or debug flag
 	
+	if not playerData.debug then
+		playerData.doWrath = nil 
+	end --you arent triggering pseudoaugury in main play . i will fight you over this
+	
 	-- awesome pays for her crimes (end of my main code)
 	
 	if playerData.awaitingContact and playerData.awaitingContact:isValid() then
@@ -1264,6 +1358,10 @@ callback.register("preHit", function(damager, hit) --needs synced (i think ?)
 	local parent = damager:getParent()
 	if parent and parent:isValid() then
 		if hit and hit:isValid() then
+			if damager:getData().frickingDie then --because swuff challenged me
+				print("AAAAAAAAAAAAAAAAAA")
+				hit:getData().frickingDie = damager:getData().frickingDie
+			end
 			if damager:getData().buster then --allows the bustering to commence
 				if modloader.checkFlag("ssl_heckbosses") or parent:getData().canBusterBosses then
 					parent:getData().busterTarget = hit
@@ -1301,10 +1399,12 @@ end)
 callback.register("onStep", function() --needs synced (i thinkkk ???)
 	for _, enemy in ipairs(pobj.actors:findAll()) do
 		if enemy:isValid() then
-		local enemyData = enemy:getData()
+			local enemyData = enemy:getData()
 			if enemyData.isBustered then
 				--print("TARGET BUSTERED.")
-				enemy.angle = math.approach(enemy.angle, 90, 22*(14/enemy.sprite.height)) -- thanks neik :)
+				if enemyData.busterParent:getData().currentSpecial ~= 8 then
+					enemy.angle = math.approach(enemy.angle, 90, 22*(14/enemy.sprite.height)) -- thanks neik :)
+				end
 				if enemyData.busterParent:getData().busterContact == true then
 					--print("RELEASING BUSTER.")
 					enemyData.busterParent:getData().busterTarget = false
@@ -1335,21 +1435,41 @@ callback.register("onStep", function() --needs synced (i thinkkk ???)
 	end
 end)
 
+callback.register("onDraw", function()
+    for _, actor in ipairs(ParentObject.find("actors"):findAll()) do
+		--if actor:get("team") ~= player:get("team") then
+			if actor:getData().frickingDie then
+				graphics.color(Color.RED)
+				graphics.print("999999999", actor.x, actor.y-actor.sprite.height, graphics.FONT_DAMAGE, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
+				if actor:getData().frickingDie == 0 then
+					actor:getData().frickingDie = nil
+				else
+					actor:getData().frickingDie = actor:getData().frickingDie - 1
+				end
+			end
+		--end
+	end
+end)
+
 callback.register("onPlayerDraw", function(player)
 	local playerData = player:getData()
 	if playerData.debug then --draws the last performed move, buttonInputHandler and inputHandler underneath Brawler
 		if playerData.inputHandler then
 			local inputs = playerData.inputHandler
+			graphics.color(Color.fromHex(0x9bd1cd))
 			graphics.print(inputs, player.x, player.y+20, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
 		end
 		if playerData.buttonInputHandler then
 			local inputs = playerData.buttonInputHandler
+			graphics.color(Color.fromHex(0x9bb8d1))
 			graphics.print(inputs, player.x, player.y+35, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
 		end
 		if playerData.debugDisplay then
+			graphics.color(Color.fromHex(0xa59bd1))
 			graphics.print(playerData.debugDisplay, player.x, player.y+50, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
 		end
 		if playerData.currentStamina then
+			graphics.color(Color.fromHex(0xbb9bd1))
 			graphics.print("Stamina: "..math.floor(playerData.currentStamina), player.x, player.y+65, graphics.FONT_DEFAULT, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTRE)
 		end
 	end
