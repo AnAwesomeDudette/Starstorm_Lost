@@ -94,6 +94,7 @@ callback.register("postLoad", function() -- AWESOME LOOK HERE
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "One-Two", "Z->Z to peform a second punch quickly after the first. &b&Special moves can be done quickly after the second blow.&!&", sprSkills, 5)
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Three-Hit Jab Combo", "Z->Z->Z to peform a fast three-hit combination attack. The final hit &b&stuns enemies&!& for &y&150% damage.&!&", sprSkills, 6)
 		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Pursuit", "Z->X->C to perform a &b&great leap.&!& If an enemy was thrown, &b&leap higher to chase them into the air.&!&", sprSkills, 7)
+		SurvivorVariant.setLoadoutSkill(SurvivorVariant.getSurvivorDefault(Brawler), "Wrath of a Raging Bear", "Z->Z->Forward->C->V to &r&perform the ultimate technique.&!&", sprSkills, 8)
 	end
 
 end) --BASED DEPARTMENT
