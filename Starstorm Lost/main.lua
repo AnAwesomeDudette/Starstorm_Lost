@@ -9,6 +9,9 @@ require("resources")
 
 -- mod content
 
+-- custom inputs library
+require("inputLibrary")
+
 -- survivors (Nek)
 local survivors = "Survivors/"
 require(survivors.."artillerist")
@@ -19,3 +22,4 @@ require(survivors.."scout")
 -- variants
 local variants = "Variants/"
 require(variants.."bombardier")
+require(variants.."dragon")
