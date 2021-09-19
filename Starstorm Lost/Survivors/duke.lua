@@ -67,7 +67,7 @@ Duke.idleSprite = sprites.idle
 Duke.titleSprite = sprites.walk
 
 -- Endquote
-Duke.endingQuote = "..and so he left, plotting a new conquest."
+Duke.endingQuote = "..and so he left, dreaming the new sovereignty."
 
 callback.register("postLoad", function()
 	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Duke), {{"Strength", 5}, {"Vitality", 5}, {"Toughness", 5}, {"Agility", 5}, {"Difficulty", 5}, {"Flamboyance", 5}})
