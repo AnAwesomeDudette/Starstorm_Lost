@@ -26,7 +26,8 @@ local sprites = {
 }
 
 -- Skill sprites
-local sprSkills = Sprite.load("Duke_Skills", path.."skills", 5, 0, 0)
+local sprSkills = Sprite.load("Duke_Skills", path.."skills", 10, 0, 0)
+local sprSkills1 = Sprite.load("Duke_Loadout_Skills", path.."skills1", 4, 0, 0)
 
 -- Selection sprite
 Duke.loadoutSprite = Sprite.load("Duke_Select", path.."select", 14, 2, 0)
@@ -36,7 +37,7 @@ Duke:setLoadoutInfo(
 [[Prestigious lineage and deep pockets gives the &or&Duke&!& everything he needs to conquer.
 Wielding his cherished &or&Royal Revolver&!&, this noble relies on expensive gadgets to maximize impact,
 with the intent of winning the most ground in the shortest amount of time.
-&g&Style,&!& &b&flair,&!& and &r&proper execution&!& are essential for victory, &or&no exceptions.&!&]], sprSkills)
+&g&Style,&!& &b&flair,&!& and &r&proper execution&!& are essential for victory, &or&no exceptions.&!&]], sprSkills1)
 
 -- Skill descriptions
 
@@ -85,6 +86,7 @@ Duke:addCallback("init", function(player)
 	playerData.bulletTimeTimer = 0
 	playerData.rechargeBullet = 3
 	playerData.slowZone = 20
+	playerData.clockColor = Color.fromHex(0xB1454D)
 	
 	player:setAnimations(sprites)
 	
@@ -98,13 +100,13 @@ Duke:addCallback("init", function(player)
 	sprSkills, 1, 40)
 		
 	player:setSkill(2, "Kinetic Replicator", "Deploy a gadget with an area around it, in which enemies share damage recieved.",
-	sprSkills, 2, 9 * 60)
+	sprSkills, 3, 9 * 60)
 		
 	player:setSkill(3, "Ambush", "Slide on your knees past your enemies. Loads 4th bullet, empowers piercing depending on enemies you passed.",
-	sprSkills, 3, 7 * 60)
+	sprSkills, 4, 7 * 60)
 		
 	player:setSkill(4, "Watcher's Watch", "Toggle to slow down enemies around you.",
-	sprSkills, 4, 15)
+	sprSkills, 5, 15)
 end)
 
 
@@ -118,11 +120,12 @@ Duke:addCallback("scepter", function(player)
 	player:setSkill(4,
 		"",
 		"",
-		sprSkills, 9,
+		sprSkills, 5,
 		15
 	)
 	
 	player:getData().rechargeBullet = 2
+	player:getData().clockColor = Color.fromHex(0xEA5A6E)
 end)
 
 -- Skills
@@ -404,6 +407,26 @@ Duke:addCallback("step", function(player)
 	if playerData.dukeTime and playerData.bulletTime == 0 then 
 		playerData.dukeTime = false
 	end
+	
+	-- visual
+	if playerAc.bulletCount and playerAc.bulletCount < 3 then
+		player:setSkillIcon(1, sprSkills, 1)
+	elseif playerAc.bulletCount then 
+		player:setSkillIcon(1, sprSkills, 2)
+	end
+	
+	local extra = 0
+	if playerAc.scepter > 0 then
+		extra = 3
+	end
+	
+	if playerData.bulletTime and playerData.bulletTime < 240 then
+		player:setSkillIcon(4, sprSkills, 7 + extra)
+	elseif playerData.bulletTime and playerData.bulletTime < 480 then
+		player:setSkillIcon(4, sprSkills, 6 + extra)
+	elseif playerData.bulletTime then
+		player:setSkillIcon(4, sprSkills, 5 + extra)
+	end
 end)
 
 local function stupidClock()
@@ -414,7 +437,7 @@ local function stupidClock()
 			
 			local r = playerData.slowZone
 			local angle = math.rad(450 - playerData.bulletTime / 2)
-			graphics.color(Color.RED)
+			graphics.color(playerData.clockColor)
 			graphics.alpha(0.6)
 			graphics.circle(player.x, player.y, r, true)
 			for i = 1, 12 do
