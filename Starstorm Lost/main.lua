@@ -22,4 +22,4 @@ require(survivors.."scout")
 -- variants
 local variants = "Variants/"
 require(variants.."bombardier")
-require(variants.."dragon")
+--require(variants.."dragon")
