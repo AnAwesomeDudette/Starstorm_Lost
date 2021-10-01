@@ -3,9 +3,11 @@ local path = "Survivors/Brawler/"
 --Credit to bruh#6900 and swuff★#2224 for a great deal of visual design and mechanical design inspiration~! ^^
 local Brawler = Survivor.new("Brawler")
 
-require("Variants/truebrawler")--um, dunno if i can do this ? only one way to fihnd out 
---require("Variants/testbrawler")
+--require("Variants/truebrawler")--um, dunno if i can do this ? only one way to fihnd out 
 --ah, yeah i can do that :)
+--kinda ,,
+
+
 
 --for the record, it's known that Buster (special 5) causes "attempted to access invalid instance" errors sometimes
 
@@ -147,8 +149,14 @@ Brawler:addCallback("init", function(player)
 	
 	--buster refers to any sort of command grab, something that grabs the opponent and moves them with the player instead of just hitting them
 	--likewise, buster also generally refers to Suplex
-	playerData.busterTarget = false --accessor that points towards enemy/enemies hit with Suplex
+	playerData.busterTarget = false --indicator that points towards enemy/enemies hit with Suplex
 	playerData.busterContact = false --boolean that triggers when contact is made with the ground while Suplex occurs
+
+	playerData.onBuster = { --calls function when buster associated with special move is used
+		[4] = function(player) local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 2.5); bullet:set("knockup", 3); bullet:getData().staminaReturn = 30 return bullet end,
+		[5] = function(player) local bullet = player:fireExplosion(player.x, player.y + player.yscale * -2, 50 / 19, 12 / 4, 5); bullet:set("knockup", 5); bullet:getData().staminaReturn = 40 return bullet end
+	}
+	
 	playerData.canBusterBosses = false --self explanatory
 	
 	playerData.wrath = false --controls the wrath of a raging bear
@@ -395,7 +403,6 @@ end)
 Brawler:addCallback("onSkill", function(player, skill, relevantFrame)
 	local playerAc = player:getAccessor()
 	local playerData = player:getData()
-	
 	
 	--every skill is structured by checking the current special move *before* executing any code
 	
@@ -1022,7 +1029,7 @@ Brawler:addCallback("step", function(player)
 	--print(player:get("activity"))
 	-- awesome makes horrible mistakes starting here (beginning of my main code)
 	
-	if player:get("activity") == 1 and playerData.currentSpecial == 0 then
+	if player:get("activity") == 1 and playerData.currentSpecial == 0 and not playerData.skin_skill1Override then
 		if player:get("z_skill") == 1 then
 			if playerData.canPunch then
 				if playerData.punch == 1 then
@@ -1038,8 +1045,7 @@ Brawler:addCallback("step", function(player)
 	else
 		playerData.punch = 1
 	end
-	
-	if playerData.busterContact then
+	--[[
 		if playerData.currentSpecial == 4 then
 			local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 2.5)
 			bullet:set("knockup", 3)
@@ -1049,10 +1055,13 @@ Brawler:addCallback("step", function(player)
 			bullet:set("knockup", 5)
 			bullet:getData().staminaReturn = 40
 		end
+	]]
+	if playerData.busterContact then
+		playerData.onBuster[playerData.currentSpecial](player)
 		playerData.busterContact = false
 	end --buster :)
 	
-	if playerData.currentSpecial > 0 and (playerAc.activity < 1 or playerAc.activity > 5) then
+	if playerData.currentSpecial > 0 and (playerAc.activity < 1 or playerAc.activity > 5) and not playerData.skin_specialOverride then
 		playerData.currentSpecial = 0
 		playerData.busterTarget = false --failsafe
 		playerData.pounceCharge = 0 -- pounce reset
@@ -1109,7 +1118,9 @@ Brawler:addCallback("step", function(player)
 	
 	if playerData.awaitingGroundImpact then
 		if playerData.awaitingGroundImpact > 0 then
-			player:set("invincible", math.max(player:get("invincible"), 5))
+			if not playerData.overrideInvul then
+				player:set("invincible", math.max(player:get("invincible"), 5))
+			end
 			playerData.awaitingGroundImpact = playerData.awaitingGroundImpact - 1
 		end
 		if playerData.midAirDamageTimer then
@@ -1134,7 +1145,7 @@ Brawler:addCallback("step", function(player)
 			if onScreen(player) then
 				misc.shakeScreen(3 + lastVspeed)
 			end
-			if playerData.currentSpecial ~= 5 then
+			if playerData.currentSpecial ~= 5 and not (playerData.skin_skill4Override or playerData.skin_fullSkillOverride) then
 				local mult = lastVspeed * 0.5
 				for i = 0, player:get("sp") do
 					local bullet = player:fireExplosion(player.x, player.y, 30 / 19, 5 / 4, math.min(1 + mult, 10))
@@ -1152,10 +1163,12 @@ Brawler:addCallback("step", function(player)
 			sfx.RiotGrenade:play(0.9)
 			--player:setAnimation("jump", player:getData()._ogJumpBk)
 			player.subimage = 5
-			if playerData.busterTarget and playerData.busterTarget:isValid() and (playerData.currentSpecial == 4 or playerData.currentSpecial == 5) then --not sure if i need this ? --i do need it . gog
+			if playerData.busterTarget --[[and playerData.busterTarget:isValid()]] and playerData.onBuster[playerData.currentSpecial] then --not sure if i need this ? --i do need it . gog
 				playerData.busterContact = true
 			end
-			player:set("pVspeed", -2)
+			if not playerData.skin_skill4Override then
+				player:set("pVspeed", -2)
+			end
 		end
 		playerData.lastVerticalSpeed = player:get("pVspeed")
 	end
@@ -1173,6 +1186,7 @@ local busterBlacklist = {
 	[obj.Ifrit] = true,]]
 	--it's only fair
 }
+
 --[[
 if obj.ArcherBugHive then
 	busterBlacklist[obj.ArcherBugHive] = true
@@ -1241,38 +1255,66 @@ callback.register("onStep", function()
 			local enemyData = enemy:getData()
 			if enemyData.isBustered then
 				--print("TARGET BUSTERED.")
-				if enemyData.busterParent:getData().currentSpecial ~= 8 then
+				local parent = enemyData.busterParent
+				local parentData = parent:getData()
+				
+				if parentData.currentSpecial ~= 8 
+				and not enemyData.doneBuster 
+				and not parentData.busterMovement then
 					enemy.angle = math.approach(enemy.angle, 90, 22*(14/enemy.sprite.height)) -- thanks neik :)
 				end
+
 				if enemyData.busterParent:getData().busterContact == true then
 					--print("RELEASING BUSTER.")
-					enemyData.busterParent:getData().busterTarget = false
-					enemyData.isBustered = nil
-					enemyData.busterParent = nil
-					enemy.angle = 0
+					if not parentData.onBusterContact and not enemyData.doneBuster then
+						enemyData.busterParent:getData().busterTarget = false
+						enemyData.isBustered = nil
+						enemyData.busterParent = nil
+						enemy.angle = 0
+						enemyData.doneBuster = true
+					elseif parentData.onBusterContact[parentData.currentSpecial] and not enemyData.doneBuster then
+						parentData.onBusterContact[parentData.currentSpecial](parent, enemy)
+						enemyData.doneBuster = true
+					end
+				elseif enemyData.doneBuster and (parentData.afterBusterContact or enemyData._storeAfterBusterContact) then
+					if not enemyData._storeAfterBusterContact then
+						enemyData._storeAfterBusterContact = parentData.currentSpecial
+					elseif enemyData._storeAfterBusterContact ~= parentData.currentSpecial and parentData.afterBusterContact[parentData.currentSpecial] then--hee hoo hoo hee hacky fix lets gooooo lets goooooooo
+						enemyData._storeAfterBusterContact = parentData.currentSpecial
+					end
+					parentData.afterBusterContact[enemyData._storeAfterBusterContact](parent, enemy)
 				end
 				if enemyData.busterParent then --a BUNCH of collision checks because i dont wanna have provi in a wall
-					if not enemy:collidesMap(enemyData.busterParent.x + enemyData.busterParent:get("pHspeed"), enemyData.busterParent.y) then
-						enemy.x = enemyData.busterParent.x
-					else
-						enemy.x = enemy.x
-					end
-					if not enemy:collidesMap(enemyData.busterParent.x, enemyData.busterParent.y + enemyData.busterParent:get("pVspeed")) then
-						enemy.y = enemyData.busterParent.y
-					else
-						enemy.y = enemy.y
-					end
+					local parent = enemyData.busterParent
+					local parentData = parent:getData()
+					if not parentData.busterMovement and not enemyData._storeAfterBusterContact then
 					
-					local enemySprite = enemy.sprite
-					if enemy:collidesMap(enemy.x, enemy.y * enemy.yscale + enemyData.busterParent:get("pVspeed")*2*(enemySprite.height/14--[[approximate player sprite height]])) then
-						enemy.angle = math.approach(enemy.angle, 0, (-15*enemyData.busterParent:get("pVspeed"))) --approximates a rate to return the enemy's angle to 0 before it hits the ground
-						--print(-15*enemyData.busterParent:get("pVspeed"))
+						if not enemy:collidesMap(enemyData.busterParent.x + enemyData.busterParent:get("pHspeed"), enemyData.busterParent.y) then
+							enemy.x = enemyData.busterParent.x
+						else
+							enemy.x = enemy.x
+						end
+						
+						if not enemy:collidesMap(enemyData.busterParent.x, enemyData.busterParent.y + enemyData.busterParent:get("pVspeed")) then
+							enemy.y = enemyData.busterParent.y
+						else
+							enemy.y = enemy.y
+						end
+						
+						local enemySprite = enemy.sprite
+						if enemy:collidesMap(enemy.x, enemy.y * enemy.yscale + enemyData.busterParent:get("pVspeed")*2*(enemySprite.height/14--[[approximate player sprite height]])) then
+							enemy.angle = math.approach(enemy.angle, 0, (-15*enemyData.busterParent:get("pVspeed"))) --approximates a rate to return the enemy's angle to 0 before it hits the ground
+							--print(-15*enemyData.busterParent:get("pVspeed"))
+						end
+						
+					elseif parentData.busterMovement[parentData.currentSpecial] and not enemyData.doneBuster then 
+						parentData.busterMovement[parentData.currentSpecial](parent, enemy)
 					end
 				end
 			end
 		end
 	end
-end)
+end, 1)
 --[[
 callback.register("onDraw", function()
     for _, actor in ipairs(ParentObject.find("actors"):findAll()) do

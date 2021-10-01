@@ -36,15 +36,86 @@ callback.register("onPlayerStep", function(player)
 		end --ticks down the bufferTimer frame counter to 0
 		
 		--begin directional input check
-		local gamepad = input.getPlayerGamepad(player)
+		--local gamepad = input.getPlayerGamepad(player)
 		if not gamepad then
+			--[[
 			playerData.inputs[1] = input.checkControl("up", player) --needs synced
 			playerData.inputs[2] = input.checkControl("right", player) --needs synced
 			playerData.inputs[3] = input.checkControl("down", player) --needs synced
 			playerData.inputs[4] = input.checkControl("left", player) --needs synced
+			]]
+			
+			local up = playerData.inputs[1]
+			local right = playerData.inputs[2]
+			local down = playerData.inputs[3]
+			local left = playerData.inputs[4]
+			
+			local moveLeft = player:get("moveLeft")
+			local ropeDown = player:get("ropeDown")
+			local moveRight = player:get("moveRight")
+			local ropeUp = player:get("ropeUp")
+			
+			if up == 3 then
+				up = 2
+			elseif up == 2 and ropeUp == 1 then
+				up = 2
+			elseif up == 2 then
+				up = 1
+			elseif up == 1 then
+				up = 0
+			end
+	
+			if down == 3 then
+				down = 2
+			elseif down == 2 and ropeDown == 1 then
+				down = 2
+			elseif down == 2 then
+				down = 1
+			elseif down == 1 then
+				down = 0
+			end
+
+			if right == 3 then
+				right = 2
+			elseif right == 2 and moveRight == 1 then
+				right = 2
+			elseif right == 2 then
+				right = 1
+			elseif right == 1 then
+				right = 0
+			end
+	
+			if left == 3 then
+				left = 2
+			elseif left == 2 and moveLeft == 1 then
+				left = 2
+			elseif left == 2 then
+				left = 1
+			elseif left == 1 then
+				left = 0
+			end
+	
+			if moveLeft > 0 or ropeUp > 0 or moveRight > 0 or ropeDown > 0 then
+				if ropeUp == 1 and up == 0 then
+					up = 3
+				elseif ropeDown == 1 and down == 0 then
+					down = 3
+				end
+				if moveRight == 1 and right == 0 then
+					right = 3
+				elseif moveLeft == 1 and left == 0 then
+					left = 3
+				end
+			end
+			
+			playerData.inputs[1] = up
+			playerData.inputs[2] = right
+			playerData.inputs[3] = down
+			playerData.inputs[4] = left
+			
 		end
 		
-		--controller support
+		--[[controller support
 			--for the record there's totally a better way to do this, but its not about if i should, its about if i could,
 			-- and the answer . is still no
 		if gamepad then 
@@ -126,7 +197,7 @@ callback.register("onPlayerStep", function(player)
 			playerData.inputs[4] = left
 			--print(up..right..down..left)
 		end
-		--end controller support
+		--end controller support]]
 		
 		local up = playerData.inputs[1]
 		local right = playerData.inputs[2]
