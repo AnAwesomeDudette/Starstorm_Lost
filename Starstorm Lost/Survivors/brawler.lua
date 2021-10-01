@@ -1276,7 +1276,7 @@ callback.register("onStep", function()
 						parentData.onBusterContact[parentData.currentSpecial](parent, enemy)
 						enemyData.doneBuster = true
 					end
-				elseif enemyData.doneBuster and (parentData.afterBusterContact[parentData.currentSpecial] or enemyData._storeAfterBusterContact) then
+				elseif enemyData.doneBuster and (parentData.afterBusterContact or enemyData._storeAfterBusterContact) then
 					if not enemyData._storeAfterBusterContact then
 						enemyData._storeAfterBusterContact = parentData.currentSpecial
 					elseif enemyData._storeAfterBusterContact ~= parentData.currentSpecial and parentData.afterBusterContact[parentData.currentSpecial] then--hee hoo hoo hee hacky fix lets gooooo lets goooooooo
