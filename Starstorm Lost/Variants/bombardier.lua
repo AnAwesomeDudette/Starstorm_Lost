@@ -194,7 +194,9 @@ survivor:addCallback("onSkill", function(player, skill, relevantFrame)
 			if playerAc.free == 1 then 
 				angleDown = 90
 			end
+			local alreadyFired = false
 			if relevantFrame == 1 then
+				alreadyFired = true
 				sfx.RiotGrenade:play(1.2)
 				if playerData.homingMortars > 0 then
 					sfx.MissileLaunch:play(0.8, 0.6)
@@ -230,7 +232,7 @@ survivor:addCallback("onSkill", function(player, skill, relevantFrame)
 				player.subimage = 1
 			end
 			
-			if player.subimage == 1 and playerData.mortarTime > 0 then
+			if not alreadyFired and player.subimage == 1 and playerData.mortarTime > 0 then
 				sfx.RiotGrenade:play(1.2)
 				if playerData.homingMortars > 0 then
 						sfx.MissileLaunch:play(0.8, 0.6)
@@ -308,10 +310,12 @@ survivor:addCallback("step", function(player)
 	local playerData = player:getData()
 	local playerAc = player:getAccessor()
 	
-	if playerAc.mortarPellets >= 7 then
-		player:setSkillIcon(2, sprSkills, 6)
-	else
-		player:setSkillIcon(2, sprSkills, 2)
+	if SurvivorVariant.getActive(player) == bombardier then
+		if playerAc.mortarPellets >= 7 then
+			player:setSkillIcon(2, sprSkills, 6)
+		else
+			player:setSkillIcon(2, sprSkills, 2)
+		end
 	end
 end)
 
