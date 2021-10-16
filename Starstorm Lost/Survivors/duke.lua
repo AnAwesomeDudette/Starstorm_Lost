@@ -17,7 +17,7 @@ local sprites = {
 	jump = Sprite.load("Duke_Jump", path.."jump", 1, 5, 11),
 	climb = Sprite.load("Duke_Climb", path.."climb", 2, 4, 8),
 	death = Sprite.load("Duke_Death", path.."death", 10, 5, 11),
-	decoy = sprite,
+	decoy = Sprite.load("Duke_Decoy", path.."Decoy", 1, 10, 18),
 	
 	shoot1_1 = Sprite.load("Duke_Shoot1_1", path.."shoot1_1", 3, 5, 11),
 	shoot1_2 = Sprite.load("Duke_Shoot1_2", path.."shoot1_2", 4, 5, 11),
