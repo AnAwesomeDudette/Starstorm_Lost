@@ -78,7 +78,7 @@ Mortarman.endingQuote = "..and so he left, permeated in shrapnel."
 -- variant stuff
 callback.register("postLoad", function()
 	SurvivorVariant.setInfoStats(SurvivorVariant.getSurvivorDefault(Mortarman), {{"Strength", 10}, {"Vitality", 5}, {"Toughness", 6}, {"Agility", 6}, {"Difficulty", 6}, {"Quake", 10}})
-	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Mortarman), "The effectiveness of an Artillerist on the battlefield seems to never shift, no matter the age or era.")
+	SurvivorVariant.setDescription(SurvivorVariant.getSurvivorDefault(Mortarman), "The effectiveness of an &y&Artillerist&!& on the battlefield seems to never shift, no matter the age or era.")
 end)
 
 Mortarman:addCallback("init", function(player)
@@ -103,7 +103,7 @@ Mortarman:addCallback("init", function(player)
 	player:setSkill(2, "Load", "Load an extra shell onto the mortar.",
 	sprSkills, 2, 2 * 60)
 		
-	player:setSkill(3, "Low Launch", "Launch a mortar bomb below you that knocks all characters back.",
+	player:setSkill(3, "Low Launch", "Launch a mortar bomb below you that knocks all characters back, dealing 250% damage.",
 	sprSkills, 3, 3 * 60)
 		
 	player:setSkill(4, "Tracking Munition", "For 4 seconds, launched mortar bombs seek enemies.",
@@ -369,6 +369,35 @@ Mortarman:addCallback("step", function(player)
 		playerData.homingMortars = playerData.homingMortars - 1
 	end
 end)
+
+
+callback.register("onPlayerDraw", function(player)
+	local playerData = player:getData()
+	if playerData.homingMortars and playerData.homingMortars > 0 then
+		local x1 = player.x - 20
+		local y1 = player.y + 10 
+		local x2 = player.x + 20
+		local y2 = player.y + 11
+		local current = playerData.homingMortars
+		local maximum = 240
+		local color1 = Mortarman.loadoutColor
+		local color2 = Color.PURPLE
+		local color3 = Color.PURPLE
+		
+		graphics.color(Color.DARK_GRAY)
+		graphics.rectangle(x1, y1 - 1, x2, y2 + 1, true)
+		
+		graphics.color(Color.BLACK)
+		graphics.rectangle(x1 + 1, y1, x2 - 1, y2, false)
+		
+		local barVal = math.floor((x2 - x1) * math.min(current / maximum, 1))
+		if barVal ~= 0 then
+			graphics.color(Color.mix(color1, color2, (current / maximum)))
+			graphics.rectangle(x1 + 1, y1, x1 + barVal - 1, y2, false)
+		end
+	end
+end)
+
 
 callback.register("onPlayerHUDDraw", function(player, x, y)
 	if player:getSurvivor() == Mortarman and not player:getData().skin_skill1Override then
