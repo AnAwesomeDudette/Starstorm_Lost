@@ -1,3 +1,4 @@
+--note to self, need to fix out of bounds collision detection...,,,,,,,,,,
 callback.register("postLoad", function()
 		local survivor = Survivor.find("Brawler", "SSLost")
 		local path = "Survivors/Brawler/"
