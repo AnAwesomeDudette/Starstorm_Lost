@@ -151,7 +151,8 @@ Brawler:addCallback("init", function(player)
 	--likewise, buster also generally refers to Suplex
 	playerData.busterTarget = false --indicator that points towards enemy/enemies hit with Suplex
 	playerData.busterContact = false --boolean that triggers when contact is made with the ground while Suplex occurs
-
+	playerData.lastBuster = 0 -- controls what buster code should be run
+	
 	playerData.onBuster = { --calls function when buster associated with special move is used
 		[4] = function(player) local bullet = player:fireExplosion(player.x, player.y + player.yscale * 3, 30 / 19, 10 / 4, 2.5); bullet:set("knockup", 3); bullet:getData().staminaReturn = 30 return bullet end,
 		[5] = function(player) local bullet = player:fireExplosion(player.x, player.y + player.yscale * -2, 50 / 19, 12 / 4, 5); bullet:set("knockup", 5); bullet:getData().staminaReturn = 40 return bullet end
@@ -382,10 +383,12 @@ Brawler:addCallback("useSkill", function(player, skill)
 				if not playerData.doWrath then
 					if checkInputs(player, "direction", 4, 5, 4, 4, 6, 1) or checkInputs(player, "direction", 6, 5, 6, 4, 4, 1) then
 						playerData.currentSpecial = 4
+						playerData.lastBuster = 4
 						playerData.debugDisplay = "[4]6Z"
 						player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)
 					--[[elseif checkInputs(player, "direction", 2, 5, 2, 4, 8, 1) then
 						playerData.currentSpecial = 5
+						playerData.lastBuster = 5
 						player:survivorActivityState(4, player:getAnimation("shoot4_1"), 0.2, true, false)]]
 					else
 						player:survivorActivityState(4, player:getAnimation("shoot4"), 0.25, true, false)
@@ -1249,6 +1252,20 @@ table.insert(call.onHit, function(damager, hit)
 	end
 end)
 
+local function cancelBuster(enemy)
+	if enemy and enemy:isValid() then
+		local enemyData = enemy:getData()
+		enemyData.busterParent:getData().busterTarget = false
+		enemyData.isBustered = nil
+		enemyData.busterParent = nil
+		enemyData.doneBuster = nil
+		enemyData._busterx = nil
+		enemyData._bustery = nil
+		enemy.angle = 0
+		enemyData._storeAfterBusterContact = nil		
+	end
+end
+
 callback.register("onStep", function() 
 	for _, enemy in ipairs(pobj.actors:findAll()) do
 		if enemy:isValid() then
@@ -1256,61 +1273,74 @@ callback.register("onStep", function()
 			if enemyData.isBustered then
 				--print("TARGET BUSTERED.")
 				local parent = enemyData.busterParent
-				local parentData = parent:getData()
 				
-				if parentData.currentSpecial ~= 8 
-				and not enemyData.doneBuster 
-				and not parentData.busterMovement then
-					enemy.angle = math.approach(enemy.angle, 90, 22*(14/enemy.sprite.height)) -- thanks neik :)
-				end
-
-				if enemyData.busterParent:getData().busterContact == true then
-					--print("RELEASING BUSTER.")
-					if not parentData.onBusterContact and not enemyData.doneBuster then
-						enemyData.busterParent:getData().busterTarget = false
-						enemyData.isBustered = nil
-						enemyData.busterParent = nil
-						enemy.angle = 0
-						enemyData.doneBuster = true
-					elseif parentData.onBusterContact[parentData.currentSpecial] and not enemyData.doneBuster then
-						parentData.onBusterContact[parentData.currentSpecial](parent, enemy)
-						enemyData.doneBuster = true
-					end
-				elseif enemyData.doneBuster and (parentData.afterBusterContact or enemyData._storeAfterBusterContact) then
-					if not enemyData._storeAfterBusterContact then
-						enemyData._storeAfterBusterContact = parentData.currentSpecial
-					elseif enemyData._storeAfterBusterContact ~= parentData.currentSpecial and parentData.afterBusterContact[parentData.currentSpecial] then--hee hoo hoo hee hacky fix lets gooooo lets goooooooo
-						enemyData._storeAfterBusterContact = parentData.currentSpecial
-					end
-					parentData.afterBusterContact[enemyData._storeAfterBusterContact](parent, enemy)
-				end
-				if enemyData.busterParent then --a BUNCH of collision checks because i dont wanna have provi in a wall
-					local parent = enemyData.busterParent
+				if parent and parent:isValid() and parent:get("dead") == 0 then
+				
 					local parentData = parent:getData()
-					if not parentData.busterMovement and not enemyData._storeAfterBusterContact then
 					
-						if not enemy:collidesMap(enemyData.busterParent.x + enemyData.busterParent:get("pHspeed"), enemyData.busterParent.y) then
-							enemy.x = enemyData.busterParent.x
-						else
-							enemy.x = enemy.x
-						end
-						
-						if not enemy:collidesMap(enemyData.busterParent.x, enemyData.busterParent.y + enemyData.busterParent:get("pVspeed")) then
-							enemy.y = enemyData.busterParent.y
-						else
-							enemy.y = enemy.y
-						end
-						
-						local enemySprite = enemy.sprite
-						if enemy:collidesMap(enemy.x, enemy.y * enemy.yscale + enemyData.busterParent:get("pVspeed")*2*(enemySprite.height/14--[[approximate player sprite height]])) then
-							enemy.angle = math.approach(enemy.angle, 0, (-15*enemyData.busterParent:get("pVspeed"))) --approximates a rate to return the enemy's angle to 0 before it hits the ground
-							--print(-15*enemyData.busterParent:get("pVspeed"))
-						end
-						
-					elseif parentData.busterMovement[parentData.currentSpecial] and not enemyData.doneBuster then 
-						parentData.busterMovement[parentData.currentSpecial](parent, enemy)
+					if parentData.currentSpecial ~= 8 
+					and not enemyData.doneBuster 
+					and not parentData.busterMovement then
+						enemy.angle = math.approach(enemy.angle, 90, 22*(14/enemy.sprite.height)) -- thanks neik :)
 					end
+
+					if enemyData.busterParent:getData().busterContact == true then
+						print("RELEASING BUSTER.")
+						if not enemyData.doneBuster then
+							if parentData.onBusterContact and parentData.onBusterContact[parentData.currentSpecial] then
+								parentData.onBusterContact[parentData.currentSpecial](parent, enemy)
+								enemyData.doneBuster = true
+							else
+								--[[
+								enemyData.busterParent:getData().busterTarget = false
+								enemyData.isBustered = nil
+								enemyData.busterParent = nil
+								enemy.angle = 0
+								enemyData.doneBuster = true
+								]]
+								cancelBuster(enemy)
+							end
+						end
+					elseif enemyData.doneBuster and (parentData.afterBusterContact or enemyData._storeAfterBusterContact) then
+						if not enemyData._storeAfterBusterContact then
+							enemyData._storeAfterBusterContact = parentData.currentSpecial
+						elseif enemyData._storeAfterBusterContact ~= parentData.currentSpecial and parentData.afterBusterContact[parentData.currentSpecial] then--hee hoo hoo hee hacky fix lets gooooo lets goooooooo
+							enemyData._storeAfterBusterContact = parentData.currentSpecial
+						end
+						parentData.afterBusterContact[enemyData._storeAfterBusterContact](parent, enemy)
+					end
+					if enemyData.busterParent then --a BUNCH of collision checks because i dont wanna have provi in a wall
+						local parent = enemyData.busterParent
+						local parentData = parent:getData()
+						if not parentData.busterMovement and not enemyData._storeAfterBusterContact then
+						
+							if not enemy:collidesMap(enemyData.busterParent.x + enemyData.busterParent:get("pHspeed"), enemyData.busterParent.y) then
+								enemy.x = enemyData.busterParent.x
+							else
+								enemy.x = enemy.x
+							end
+							
+							if not enemy:collidesMap(enemyData.busterParent.x, enemyData.busterParent.y + enemyData.busterParent:get("pVspeed")) then
+								enemy.y = enemyData.busterParent.y
+							else
+								enemy.y = enemy.y
+							end
+							
+							local enemySprite = enemy.sprite
+							if enemy:collidesMap(enemy.x, enemy.y * enemy.yscale + enemyData.busterParent:get("pVspeed")*2*(enemySprite.height/14--[[approximate player sprite height]])) then
+								enemy.angle = math.approach(enemy.angle, 0, (-15*enemyData.busterParent:get("pVspeed"))) --approximates a rate to return the enemy's angle to 0 before it hits the ground
+								--print(-15*enemyData.busterParent:get("pVspeed"))
+							end
+							
+						elseif parentData.busterMovement[parentData.currentSpecial] and not enemyData.doneBuster then 
+							parentData.busterMovement[parentData.currentSpecial](parent, enemy)
+						end
+					end
+					
+					
 				end
+				
+				
 			end
 		end
 	end
