@@ -36,9 +36,8 @@ local sprites = {
 	shoot3 = Sprite.load("Scout_Shoot3", path.."shoot3", 6, 6, 15)
 }
 -- Hit sprites
-local sprSparks1 = Sprite.load("Scout_Sparks1", path.."sparks1", 3, 15, 7)
-local sprSparks2 = Sprite.load("Scout_Sparks2", path.."sparks2", 3, 7, 15)
 local sprSparks3 = Sprite.load("Scout_Sparks3", path.."sparks3", 5, 36, 30)
+local sprExp = Sprite.load("Scout_LaserExplosion", path.."laserExplosion", 9, 8, 8)
 
 -- Skill sprites
 local sprSkills = Sprite.load("Scout_Skills", path.."skills", 5, 0, 0)
@@ -102,6 +101,8 @@ scout:addCallback("init", function(player)
 	
 	playerData.shootAnim = player:getAnimation("shoot1_1")
 	playerData.armsrace = 0
+	playerData.droneMagnet = 0
+	playerData.freeze = 0
 	
 	if Difficulty.getActive() == dif.Drizzle then
 		player:survivorSetInitialStats(150, 12, 0.055)
@@ -119,7 +120,7 @@ scout:addCallback("init", function(player)
     sprSkills, 3, 2 * 60)
 
     player:setSkill(4, "NULL Radar", "Release a Laser Drone that surveys the area, dealing 33-100% damage per hit and locating the teleporter.",
-    sprSkills, 4, 3)
+    sprSkills, 4, 8 * 60)
 end)
 
 scout:addCallback("step", function(player)
@@ -309,6 +310,81 @@ objBomb:addCallback("step", function(self)
 	end
 end)
 
+-- PING OBJECT
+local objPing = Object.new("ScoutPing")
+objPing.sprite = bulMask
+objPing:addCallback("create", function(self)
+	local selfData = self:getData()
+	
+	self.alpha = 0
+	selfData.angle = math.random(0, 360)
+	selfData.speed = 1.5
+	selfData.life = 180
+end)
+objPing:addCallback("step", function(self)
+	local selfData = self:getData()
+	
+	self.x = self.x + math.cos(math.rad(selfData.angle)) * selfData.speed 
+	self.y = self.y - math.sin(math.rad(selfData.angle)) * selfData.speed
+	
+	selfData.speed = math.approach(selfData.speed, 0, selfData.speed * 0.025)
+	
+	selfData.life = selfData.life - 1
+	if selfData.life == 0 then
+		self:destroy()
+	end
+end)
+objPing:addCallback("draw", function(self)
+	local selfData = self:getData()
+	
+	graphics.color(Color.fromHex(0x43DBB0))
+	graphics.alpha(0.1)
+	graphics.setBlendMode("additive")
+	for i = math.ceil((180 - selfData.life) / 20), 9 do 
+		graphics.circle(self.x, self.y, i, false)
+	end
+	
+	graphics.alpha(selfData.life / 210)
+	local tele = nearestMatchingOp(self, obj.Teleporter, "isBig", "~=", 1)
+	if tele then
+		local r = 30
+		local direction = posToAngle(self.x, self.y, tele.x, tele.y, false)
+		
+		local x1 = self.x + math.cos(math.rad(direction)) * r
+		local y1 = self.y - math.sin(math.rad(direction)) * r 
+		
+		local x2 = self.x + math.cos(math.rad(direction - 10)) * r * 0.8 
+		local y2 = self.y - math.sin(math.rad(direction - 10)) * r * 0.8
+		
+		local x3 = self.x + math.cos(math.rad(direction + 10)) * r * 0.8 
+		local y3 = self.y - math.sin(math.rad(direction + 10)) * r * 0.8
+		
+		graphics.triangle(x1, y1, x2, y2, x3, y3, false)
+	end
+end)
+
+-- PING CIRCLE (WHICH ALSO TURNS OUT TO BE AN OBJECT)
+local objPingCircle = Object.new("ScoutPingCircle")
+objPingCircle.sprite = bulMask
+objPingCircle:addCallback("create", function(self)
+	self.alpha = 0
+	self:getData().life = 60
+	self:getData().radius = 0
+end)
+objPingCircle:addCallback("step", function(self)
+	self:getData().life = self:getData().life - 1
+	if self:getData().life == 0 then 
+		self:destroy()
+	end
+end)
+objPingCircle:addCallback("draw", function(self)
+	graphics.color(Color.fromHex(0x43DBB0))
+	graphics.alpha((self:getData().life) / 120)
+	self:getData().radius = math.approach(self:getData().radius, 120, (120 - self:getData().radius) * 0.05)
+	
+	graphics.circle(self.x, self.y, self:getData().radius, true)
+end)
+
 -- DRONES CONTROLLER
 local function RandomStuff()
 	local mult = 1
@@ -321,7 +397,11 @@ local function RandomStuff()
 end
 local function NoZeroesPlease(num)
 	if num == 0 then
-		return 1
+		if math.chance(50) then
+			return 1
+		else
+			return -1
+		end
 	else
 		return num
 	end
@@ -348,6 +428,7 @@ ctrl:addCallback("create", function(self)
 	selfData.newdirection = 0
 	selfData.turnSpeed = 0.05
 	selfData.lockOn = false
+	selfData.droneTimer = 0
 end)
 ctrl:addCallback("step", function(self)
 	local selfData = self:getData()
@@ -358,24 +439,29 @@ ctrl:addCallback("step", function(self)
 		selfData.peons = parent:getData().scoutDrones
 	end
 	
-	selfData.speed = math.approach(selfData.speed, 0, selfData.speed * 0.05)
-	selfData.direction = math.approach(selfData.direction, selfData.newdirection, angleDif(selfData.newdirection, selfData.direction) * selfData.turnSpeed)
-	selfData.turnSpeed = selfData.turnSpeed + 0.005
-	
-	if selfData.laserCount > 0 then
-		if selfData.laserCountPrevious == 0 then 
+	local parentSpeed = math.sqrt((parent:getAccessor().pHmax + parent:getAccessor().pVmax) / 2)
+	if not selfData.laserCharge then
+		selfData.speed = math.approach(selfData.speed, parentSpeed, 0.1 * (parentSpeed - selfData.speed))
+		if selfData.dirSwapped then
+			selfData.dirSwapped = false
+		end
+	else
+		if not selfData.dirSwapped then 
+			selfData.dirSwapped = true
 			for i = 1, 3 do
 				selfData.peons[i]:getData().spinDir = selfData.peons[i]:getData().spinDir * -1
-			end
+			end	
+			selfData.laserAngleStart = posToAngle(self.x, self.y, parent.x, parent.y) + 60 * selfData.peons[1]:getData().spinDir
+			selfData.laserAngleEnd = selfData.laserAngleStart - 120 * selfData.peons[1]:getData().spinDir
+			selfData.laserDir = math.sign(selfData.laserAngleStart - selfData.laserAngleEnd)
+			selfData.laserAngle = selfData.laserAngleStart
 		end
-		selfData.laserCount = selfData.laserCount - 1
-		selfData.laserCountPrevious = selfData.laserCount
-	else
-		selfData.state = "passive"
-		selfData.lockOn = false
+		selfData.speed = math.approach(selfData.speed, 0, 0.2 * selfData.speed)
 	end
+	selfData.direction = selfData.direction - angleDif(selfData.direction, selfData.newdirection) * selfData.turnSpeed
+	selfData.turnSpeed = selfData.turnSpeed + 0.005
 	
-	if selfData.state == "passive" then
+	if selfData.state == "passive" and parent:getData().droneMagnet == 0 and parent:getData().freeze == 0 then
 		if not selfData.target then
 			local targets = {}
 			local r = 120
@@ -395,65 +481,141 @@ ctrl:addCallback("step", function(self)
 			selfData.newx = nil
 			selfData.newy = nil
 		else
-			if global.timer % math.ceil(12 * (1 - (math.min(selfData.heat, 50) / 75))) == 0 then
+			if global.timer % 12 == 0 then
 				selfData.peons[selfData.currentFire]:getData().target = selfData.target
 				selfData.currentFire = selfData.currentFire % 3 + 1
 			end
-			if global.timer % math.ceil(120 * (1 - math.min(selfData.heat, 50) / 100)) == 0 then
+			if global.timer % 120 == 0 then
 				selfData.target = nil
 			end
 		end
 		
 		if not selfData.newx and not selfData.newy then
 			if selfData.target then
-				selfData.newx = math.clamp(self.x + math.random(30, 60) * NoZeroesPlease(math.sign(selfData.target.x - self.x)) * RandomStuff(), selfData.target.x - 60, selfData.target.x + 60)
-				selfData.newy = math.clamp(self.y + math.random(30, 60) * NoZeroesPlease(math.sign(selfData.target.y - self.y)) * RandomStuff(), selfData.target.y - 60, selfData.target.y + 60)
+				selfData.newx = math.clamp(self.x + math.random(selfData.target.sprite.width * 2 + 20, selfData.target.sprite.width * 2 + 40) * NoZeroesPlease(math.sign(selfData.target.x - self.x)) * RandomStuff(), selfData.target.x - 80, selfData.target.x + 80)
+				selfData.newy = math.clamp(self.y + math.random(selfData.target.sprite.height * 2 + 20, selfData.target.sprite.height * 2 + 40) * NoZeroesPlease(math.sign(selfData.target.y - self.y)) * RandomStuff(), selfData.target.y - 80, selfData.target.y + 80)
 			else
-				selfData.newx = math.clamp(self.x + math.random(20, 80) * NoZeroesPlease(math.sign(parent.x - self.x)) * RandomStuff(), parent.x - 80, parent.x + 80)
-				selfData.newy = math.clamp(self.y + math.random(20, 80) * NoZeroesPlease(math.sign(parent.y - self.y)) * RandomStuff(), parent.y - 80, parent.y + 80)
+				selfData.newx = math.clamp(self.x + math.random(10, 40) * NoZeroesPlease(math.sign(parent.x - self.x)) * RandomStuff(), parent.x - 60, parent.x + 60)
+				selfData.newy = math.clamp(self.y + math.random(10, 40) * NoZeroesPlease(math.sign(parent.y - self.y)) * RandomStuff(), parent.y - 60, parent.y + 60)
 			end
-			selfData.speed = math.sqrt(distance(self.x, self.y, selfData.newx, selfData.newy)) / 3
+			--selfData.speed = math.sqrt(distance(self.x, self.y, selfData.newx, selfData.newy)) / 3
 			selfData.newdirection = posToAngle(self.x, self.y, selfData.newx, selfData.newy)
-			selfData.turnSpeed = 0.025
+			selfData.turnSpeed = 0.01
+			selfData.droneTimer = 0
 		else
+			selfData.droneTimer = selfData.droneTimer + 1
 			self.x = self.x + math.cos(math.rad(selfData.direction)) * selfData.speed
 			self.y = self.y - math.sin(math.rad(selfData.direction)) * selfData.speed
-		
-			if math.floor(selfData.speed * 2) == 0 then
+			if selfData.laserCharge and math.floor(selfData.speed * 2) == 0 then 
+				selfData.state = "laser"
+				selfData.laserChargeTimer = 30
+				for i = 1, 3 do
+					selfData.peons[i]:getData().target = nil
+				end
+				selfData.newx = nil
+				selfData.newy = nil
+			elseif math.floor(selfData.direction / 20) == math.floor(selfData.newdirection / 20) or selfData.droneTimer > 20 then
 				selfData.newx = nil
 				selfData.newy = nil
 			end
 		end
 	end
 	
-	if selfData.state == "laser" then
-		if selfData.lockOn then
-			self.x = parent.x
-			self.y = parent.y
-		else
-			self.x = math.approach(self.x, parent.x, 0.2 * (parent.x - self.x) + math.sign(parent.x - self.x))
-			self.y = math.approach(self.y, parent.y, 0.2 * (parent.y - self.y) + math.sign(parent.y - self.y))
+	if parent:getData().droneMagnet > 0 then
+		self.x = math.approach(self.x, parent.x, (parent.x - self.x) * 0.05)
+		self.y = math.approach(self.y, parent.y, (parent.y - self.y) * 0.05)
+	end
+	
+	if selfData.state == "laser" then 
+		if selfData.laserChargeTimer > 0 then 
+			selfData.laserChargeTimer = selfData.laserChargeTimer - 1
 		end
-		if self.x >= parent.x - 4 and self.x <= parent.x + 4 and self.y >= parent.y - 4 and self.y <= parent.y + 4 then
-			selfData.lockOn = true
-			for i = 1, 3 do
-				selfData.peons[i]:getData().laserAttack = 4
-				selfData.peons[i]:getData().radiusApproach = math.sqrt(parent:getAccessor().scepter + 1) * 30
+		if selfData.laserChargeTimer == 0 then
+			local r = 180
+			local direction = math.rad(selfData.laserAngle)
+			selfData.xLaser = self.x + math.cos(direction) * r
+			selfData.yLaser = self.y - math.sin(direction) * r
+			local boom = false
+			while r > 0 do
+				selfData.xLaser = self.x + math.cos(direction) * r
+				selfData.yLaser = self.y - math.sin(direction) * r
+				local tile = obj.B:findLine(self.x, self.y, selfData.xLaser, selfData.yLaser) or obj.BNoSpawn:findLine(self.x, self.y, selfData.xLaser, selfData.yLaser)
+				if tile then
+					r = r - 1
+					boom = true
+				else
+					break
+				end
 			end
+			
+			while r > 0 do
+				local actors = pobj.actors:findAllLine(self.x, self.y, selfData.xLaser, selfData.yLaser)
+				selfData.xLaser = self.x + math.cos(direction) * r
+				selfData.yLaser = self.y - math.sin(direction) * r
+				local enemy
+				if actors then 
+					for _, actor in ipairs(actors) do
+						if actor and actor:isValid() and actor:get("team") ~= parent:get("team") then
+							r = r - 1
+							boom = true
+							enemy = true
+							break
+						end
+					end
+				else
+					break
+				end
+				if not enemy then
+					break
+				end
+			end
+			
+			if boom then 
+				sfx.GiantJellyExplosion:play(1.7, 0.2)
+				misc.fireExplosion(selfData.xLaser, selfData.yLaser, 16/19, 16/4, parent:get("damage") * ((r + 90) / 270), parent:get("team"), sprExp, nil)
+			end	
+			
+			if selfData.laserAngle == selfData.laserAngleEnd then 
+				selfData.state = "passive"
+				selfData.laserCharge = false
+				selfData.laserChargeTimer = nil
+				objPing:create(self.x, self.y)
+				objPingCircle:create(self.x, self.y)
+			end
+			
+			selfData.laserAngle = selfData.laserAngle - 3 * selfData.laserDir
 		end
-	elseif selfData.heat > 0 and global.timer % 10 == 0 then
-		selfData.heat = selfData.heat - 1
 	end
 end)
 ctrl:addCallback("draw", function(self)
 	local selfData = self:getData()
 	
-	graphics.color(Color.LIGHT_BLUE)
+	graphics.color(Color.fromHex(0x43DBB0))
 	graphics.alpha(0.8)
 	--graphics.line(self.x, self.y, self.x + math.cos(math.rad(selfData.newdirection)) * 20, self.y - math.sin(math.rad(selfData.newdirection)) * 20)
 	--graphics.color(Color.BLUE)
 	--graphics.line(self.x, self.y, self.x + math.cos(math.rad(selfData.direction)) * 20, self.y - math.sin(math.rad(selfData.direction)) * 20)
 	--graphics.print(selfData.heat, self.x, self.y, graphics.FONT_SMALL, graphics.ALIGN_MIDDLE, graphics.ALIGN_CENTER)
+	
+	if selfData.laserCharge then
+		if selfData.laserChargeTimer then
+			graphics.alpha(0.1)
+			graphics.setBlendMode("additive")
+			for i = 1, 9 - selfData.laserChargeTimer / 10 * 3 do 
+				graphics.circle(self.x, self.y, i, false)
+			end
+			graphics.alpha(0.15)
+			if selfData.state == "laser" and selfData.laserChargeTimer == 0 then
+				local pogAngle = selfData.laserAngle + 3 * selfData.laserDir
+				local pogDistance = distance(self.x, self.y, selfData.xLaser, selfData.yLaser)
+				for i = 1, 5 do
+					local pogX = self.x + math.cos(math.rad(pogAngle)) * (pogDistance - (i - 1) * 2)
+					local pogY = self.y - math.sin(math.rad(pogAngle)) * (pogDistance - (i - 1) * 2)
+					graphics.line(self.x, self.y, pogX, pogY, i)
+				end
+			end
+		end
+	end
 	
 end)
 
@@ -488,27 +650,8 @@ objDrone:addCallback("step", function(self)
 	self.x = control.x + math.cos(math.rad(selfData.angle)) * selfData.radius
 	self.y = control.y - math.sin(math.rad(selfData.angle)) * selfData.radius
 	
-	if selfData.laserAttack > 0 then
+	if control:getData().state == "laser" then 
 		selfData.spinSpeed = math.approach(selfData.spinSpeed, 15, 0.05 * (15 - selfData.spinSpeed))
-		selfData.target = nil
-		for _, actor in ipairs(pobj.actors:findAllLine(self.x, self.y, control.x, control.y)) do
-			if actor and actor:isValid() and actor:get("team") ~= parent:get("team") and not actor:getData().laserCd or actor:getData().laserCd == 0 then
-				local bullet = parent:fireExplosion(actor.x, actor.y, 1/19, 1/4, 0.2, nil, nil, DAMAGER_NO_PROC)
-				bullet:set("stun", 0.01)
-				actor:getData().laserCd = 3
-				--[[if not actor:getData().laserHits then
-					actor:getData().laserHits = 1
-				else
-					actor:getData().laserHits = actor:getData().laserHits + 1
-				end
-				actor:getData().laserMince = 5]]
-				control:getData().heat = math.min(control:getData().heat + 1, 100)
-			end
-		end
-		selfData.laserAttack = selfData.laserAttack - 1
-		if selfData.laserAttack == 0 then
-			selfData.radiusApproach = droneRadius
-		end
 	else
 		selfData.spinSpeed = math.approach(selfData.spinSpeed, 5, 0.05 * (selfData.spinSpeed - 5))
 	end
@@ -534,6 +677,7 @@ scout:addCallback("useSkill", function(player, skill)
 	local playerData = player:getData()
 	local playerAc = player:getAccessor()
 	if player:get("activity") == 0 then
+		local cd = true
 		if skill == 1 then
 			-- Z skill
 			player:survivorActivityState(1, player:getData().shootAnim, 0.25, true, true)
@@ -556,28 +700,14 @@ scout:addCallback("useSkill", function(player, skill)
 			-- C skill
 			player:survivorActivityState(3, player:getAnimation("shoot3"), 0.4, false, false)
 			--print(playerAc.pHmax)
-		elseif skill == 4 then
-			-- V skill
-			--player:survivorActivityState(4, player:getAnimation("shoot4"), 0.25, false, false)
-			--[[local laser = obj.laserdrone:create(player.x, player.y)
-			laser:getData().parentId = player.id
-			laser:getData().direction.spin = player.xscale
-			laser:getData().direction.laserStart = 90 + player.xscale * -90
-			laser:getData().direction.laserEnd = 90 + player.xscale * 90
-			laser:getData().scepter = playerAc.scepter]]
-			
-			--[[for _, droneId in ipairs(playerData.scoutDrones) do
-				local drone = Object.findInstance(droneId)
-				if drone and drone:isValid() then
-					drone:getData().laserAttack = 180
-					drone:getData().spinDir = drone:getData().spinDir * -1
-					drone:getData().radiusApproach = math.sqrt(playerAc.scepter + 1) * droneRadius
-				end
-			end]]
-			player:getData().controller:getData().state = "laser"
-			player:getData().controller:getData().laserCount = 5
+		elseif skill == 4 and not playerData.controller:getData().laserCharge then
+			playerData.droneMagnet = 2
+			cd = false
 		end
-		player:activateSkillCooldown(skill)
+		
+		if cd then
+			player:activateSkillCooldown(skill)
+		end
 	end
 end)
 
@@ -686,19 +816,22 @@ scout:addCallback("step", function(player)
 			playerData.hoverTimer = nil
 		end
 	end
-end)
-
-local function MahLazors()
-	for _, player in ipairs(scoutPlayers) do
-		for _, drone in ipairs(player:getData().scoutDrones) do
-			if drone and drone:isValid() and drone:getData().laserAttack > 0 then
-				graphics.color(Color.fromHex(0x43DBB0))
-				graphics.alpha(0.8)
-				graphics.line(drone.x - 1, drone.y + 1, player:getData().controller.x - 1, player:getData().controller.y + 1, 3)
-			end
+	
+	if playerData.freeze > 0 then
+		playerData.freeze = playerData.freeze - 1
+		if playerData.freeze == 0 then
+			playerData.controller:getData().laserCharge = true
 		end
 	end
-end
+	
+	if playerData.droneMagnet and playerData.droneMagnet > 0 then 
+		playerData.droneMagnet = playerData.droneMagnet - 1
+		if playerData.droneMagnet == 0 then
+			playerData.freeze = 15
+			player:activateSkillCooldown(4)
+		end
+	end
+end)
 
 callback.register("onStageEntry", function()
 	scoutPlayers = {}
@@ -726,14 +859,13 @@ callback.register("onStageEntry", function()
 				table.insert(player:getData().scoutDrones, drone)		
 			end
 			table.insert(scoutPlayers, player)
-			graphics.bindDepth(-3, MahLazors)
 		end
 	end
 end)
 
 callback.register("onPlayerDrawBelow", function(player)
 	local playerData = player:getData()
-	if playerData.hovering and player:get("activity") ~= 1 and player:get("activity") ~= 3 then
+	if playerData.hovering and player:get("activity") ~= 1 and player:get("activity") ~= 3 and player:get("activity") ~= 30 then
 		graphics.drawImage{
 			image = player:getAnimation("jumpHoverJet"),
 			x = player.x,
