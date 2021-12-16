@@ -621,7 +621,7 @@ end)
 
 -- SCOUT DRONES (USED)
 local droneRadius = 15
-local droneIdle = Sprite.load("ScoutDroneIdle", path.."droneIdle", 4, 3, 3)
+local droneIdle = Sprite.load("ScoutDroneIdle", path.."droneIdle", 4, 5, 5)
 local objDrone = Object.new("ScoutDrone")
 objDrone.sprite = droneIdle
 objDrone:addCallback("create", function(self)
