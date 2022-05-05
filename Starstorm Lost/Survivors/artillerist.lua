@@ -29,7 +29,7 @@ local sprSkills = Sprite.load("Mortarman_Skills", path.."skills", 6, 0, 0)
 local sprSkills2 = Sprite.load("Mortarman_Skills2", path.."skillsCount", 9, 0, 0)
 
 -- Selection sprite
-Mortarman.loadoutSprite = Sprite.load("Mortarman_Select", path.."select", 4, 2, 0)
+Mortarman.loadoutSprite = Sprite.load("Mortarman_Select", path.."select", 14, 2, 0)
 
 -- Selection description
 Mortarman:setLoadoutInfo(
