@@ -1,14 +1,14 @@
 {
     "name": "Starstorm Lost",
-	"version": "0.1.0",
-    "description": "Starstorm survivors that lost the poll, now finished up. \nCurrently implements four survivors and two variants. \n\n     Profile Flags: \n\n- ssl_truebrawler: Enables Brawler's true potential, including 7 additional moves executed via fighting-game style inputs. \n- ssl_debug: Enables several debug features, mainly a display of Brawler's input systems. \n- ssl_heckbosses: Brawler can suplex any enemy.",
+	"version": "0.5.0",
+    "description": "Starstorm survivors that lost the poll, now finished up. \nCurrently implements two survivors. Multiplayer-compatible.",
 	"internalname": "SSLost",
     "author": "Neik, Jingo, Altzeus",
 	"mpcompat": true,
 	"dependencies": [
 		{
 			"name": "Starstorm",
-			"version": "1.10.0",
+			"version": "1.13.0",
 			"optional": false
 		}
 	]
